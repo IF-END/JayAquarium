@@ -2,7 +2,12 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- 아이패드에서 '홈 화면에 추가'로 실행하면 주소창 없이 전체화면으로 열립니다 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="재이의 바다">
   <title>Jay's Ocean Deluxe - 광란의 바다 수족관</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -47,6 +52,38 @@
       pointer-events: none !important;
       transform: translateY(40px);
     }
+
+    /* 아이패드: 주소창·홈 표시줄에 화면이 가려지지 않게 */
+    html, body { overscroll-behavior: none; }
+    @supports (height: 100dvh) { body { height: 100dvh !important; } }
+    #top-header { padding-top: max(0.5rem, env(safe-area-inset-top)); padding-left: max(0.5rem, env(safe-area-inset-left)); padding-right: max(0.5rem, env(safe-area-inset-right)); }
+    #bottom-dock { bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+
+    /* 아이패드 너비에서 버튼 글자가 두 줄로 깨지지 않게 */
+    #top-header button span, #top-header span { white-space: nowrap; }
+    @media (max-width: 1180px) {
+      #top-header .logo-badge { display: none; }
+      #top-header { gap: 0.25rem; }
+    }
+    @media (max-width: 1010px) {
+      #top-header > div:first-child { display: none; }
+    }
+
+    /* 생물 분류 탭 */
+    .cat-tab { padding: 0.45rem 0.9rem; border-radius: 0.9rem; font-size: 0.95rem; font-weight: 900; color: #bae6fd; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); white-space: nowrap; }
+    .cat-tab.active { color: #0f172a; background: linear-gradient(#fde047, #f59e0b); border-color: #fef9c3; }
+
+    /* 글자 맞춰 입양 */
+    .spell-slot { width: 3.4rem; height: 3.8rem; border-radius: 0.9rem; border: 3px dashed rgba(125,211,252,0.55); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 900; color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.3); }
+    .spell-slot.current { border-color: #fde047; }
+    .spell-slot.filled { border: 3px solid #34d399; color: #fde047; background: rgba(16,185,129,0.22); }
+    .spell-tile { width: 4.2rem; height: 4.2rem; border-radius: 1rem; font-size: 2.3rem; font-weight: 900; color: #0f172a; background: linear-gradient(#fffbeb, #fcd34d); border: 2px solid #fff; box-shadow: 0 5px 0 rgba(0,0,0,0.35); transition: transform 0.08s ease, opacity 0.2s ease; }
+    .spell-tile:active { transform: translateY(3px); }
+    .spell-tile.used { opacity: 0.15; pointer-events: none; }
+    .spell-tile.wrong { animation: spell-shake 0.35s; }
+    .spell-tile.hint { animation: spell-glow 0.8s infinite alternate; }
+    @keyframes spell-shake { 25% { transform: translateX(-7px); } 75% { transform: translateX(7px); } }
+    @keyframes spell-glow { from { box-shadow: 0 0 4px 2px #fde047; } to { box-shadow: 0 0 20px 9px #fde047; } }
   </style>
 </head>
 <body class="relative w-screen h-screen overflow-hidden bg-slate-950 text-white select-none">
@@ -63,16 +100,8 @@
         <div>
           <div class="flex items-center space-x-1.5">
             <span class="font-pop text-lg sm:text-xl font-black tracking-wider text-yellow-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">JAY'S OCEAN</span>
-            <span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wide border border-yellow-300">DELUXE</span>
+            <span class="logo-badge bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wide border border-yellow-300">DELUXE</span>
           </div>
-        </div>
-      </div>
-
-      <div class="bg-black/75 backdrop-blur-md px-3.5 py-1.5 rounded-2xl border-2 border-amber-400/80 flex items-center space-x-2 shadow-lg">
-        <span class="text-xl sm:text-2xl animate-spin" style="animation-duration: 4s;">🪙</span>
-        <div>
-          <span class="text-[10px] text-amber-200 block -mb-1 font-bold">골드 코인</span>
-          <span id="coin-counter" class="font-pop text-base sm:text-xl font-black text-amber-300 tracking-wider">0</span>
         </div>
       </div>
     </div>
@@ -81,11 +110,11 @@
     <div class="bg-black/60 backdrop-blur-md p-1 rounded-2xl border-2 border-cyan-400/50 flex items-center shadow-lg">
       <button id="btn-atlantic" onclick="switchOcean('atlantic')" 
         class="flex items-center space-x-1 px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all bg-gradient-to-b from-sky-400 to-blue-600 text-white shadow border border-yellow-200">
-        <span>🌊 대서양 (고래&상어)</span>
+        <span>🌊 대서양</span>
       </button>
       <button id="btn-indian" onclick="switchOcean('indian')" 
         class="flex items-center space-x-1 px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all text-cyan-200 hover:text-white">
-        <span>🏝️ 인도양 (산호&상어)</span>
+        <span>🏝️ 인도양</span>
       </button>
     </div>
 
@@ -95,11 +124,6 @@
       <button type="button" onclick="openDrawingStudio()" class="bg-gradient-to-b from-rose-400 to-pink-600 border-2 border-pink-200 text-white font-black px-3 py-1.5 rounded-2xl text-xs sm:text-sm shadow-md flex items-center space-x-1.5 popcap-btn">
         <span class="text-base">🎨</span>
         <span>물고기 그리기</span>
-      </button>
-
-      <button type="button" onclick="openShopModal()" class="bg-gradient-to-b from-amber-400 to-amber-600 border-2 border-yellow-200 text-slate-950 font-black px-3 py-1.5 rounded-2xl text-xs sm:text-sm shadow-md flex items-center space-x-1 popcap-btn">
-        <span>🛒</span>
-        <span>수조 상점</span>
       </button>
 
       <button type="button" onclick="toggleCinemaMode()" class="bg-gradient-to-b from-indigo-500 to-indigo-800 border-2 border-indigo-300 text-white font-black px-3 py-1.5 rounded-2xl text-xs sm:text-sm shadow-md flex items-center space-x-1 popcap-btn">
@@ -115,6 +139,10 @@
       <button type="button" onclick="startSeaQuiz()" class="bg-gradient-to-b from-purple-500 to-pink-600 border-2 border-pink-200 text-white font-black px-3 py-1.5 rounded-2xl text-xs sm:text-sm shadow-md flex items-center space-x-1 popcap-btn">
         <span>⭐</span>
         <span class="hidden sm:inline">한글 퀴즈</span>
+      </button>
+
+      <button type="button" id="btn-fullscreen" onclick="toggleFullscreen()" aria-label="전체화면" class="bg-sky-600/80 hover:bg-sky-500 border-2 border-cyan-300 text-white p-2 rounded-2xl shadow popcap-btn">
+        <span>⛶</span>
       </button>
 
       <button type="button" id="btn-audio-toggle" onclick="toggleAudio()" class="bg-sky-600/80 hover:bg-sky-500 border-2 border-cyan-300 text-white p-2 rounded-2xl shadow popcap-btn">
@@ -169,12 +197,8 @@
           <span><strong>느긋하고 우아한 수영</strong>: 까딱거림 없이 진짜 바다처럼 유유히 유영</span>
         </p>
         <p class="flex items-center space-x-2">
-          <span>🪙</span>
-          <span><strong>코인 수집 & 입양</strong>: 코인을 모아 새로운 생물을 입양하세요 (종류당 최대 5마리)</span>
-        </p>
-        <p class="flex items-center space-x-2">
-          <span>🛒</span>
-          <span><strong>수조 상점</strong>: 사료 업그레이드, 달팽이 속도업 등 다양한 기능</span>
+          <span>✏️</span>
+          <span><strong>글자 맞춰 입양</strong>: 이름을 듣고 글자를 맞추면 새 친구가 와요 (종류당 최대 5마리)</span>
         </p>
       </div>
 
@@ -184,70 +208,18 @@
     </div>
   </div>
 
-  <!-- ==================== UPGRADE & SHOP MODAL ==================== -->
-  <div id="shop-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden">
-    <div class="relative w-full max-w-md bg-gradient-to-b from-amber-950/90 via-slate-900 to-slate-950 border-2 border-amber-400/60 rounded-3xl p-6 shadow-2xl text-white text-center">
-      <button onclick="closeShopModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center font-bold">✕</button>
-      <div class="flex items-center justify-center space-x-2 mb-2">
-        <span class="text-2xl">🏪</span>
-        <h3 class="text-2xl font-black text-amber-300">Jay의 아쿠아리움 상점</h3>
-      </div>
-      <p class="text-xs text-amber-100/80 mb-4">모은 코인으로 수조의 능력을 업그레이드해보세요!</p>
-
-      <div class="space-y-2.5 text-left text-xs mb-4">
-        <!-- Upgrade 1: Super Krill -->
-        <div class="bg-white/10 border border-white/15 rounded-2xl p-3 flex items-center justify-between">
-          <div class="flex items-center space-x-2.5">
-            <span class="text-2xl">🦐</span>
-            <div>
-              <p class="font-bold text-white text-sm">최고급 영양 크릴 (먹이 UP)</p>
-              <p id="desc-krill" class="text-[11px] text-amber-200/80">물고기가 2배 빠르게 성장해요</p>
-            </div>
-          </div>
-          <button id="btn-buy-krill" onclick="buyUpgrade('krill', 150)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow popcap-btn">
-            150 🪙
-          </button>
-        </div>
-
-        <!-- Upgrade 2: Fast Snail -->
-        <div class="bg-white/10 border border-white/15 rounded-2xl p-3 flex items-center justify-between">
-          <div class="flex items-center space-x-2.5">
-            <span class="text-2xl">⚡</span>
-            <div>
-              <p class="font-bold text-white text-sm">터보 달팽이 (속도 2배)</p>
-              <p id="desc-snail" class="text-[11px] text-amber-200/80">바닥 코인을 2배 빠르게 수집해요</p>
-            </div>
-          </div>
-          <button id="btn-buy-snail" onclick="buyUpgrade('snail', 250)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow popcap-btn">
-            250 🪙
-          </button>
-        </div>
-
-        <!-- Upgrade 3: Fortune Sea -->
-        <div class="bg-white/10 border border-white/15 rounded-2xl p-3 flex items-center justify-between">
-          <div class="flex items-center space-x-2.5">
-            <span class="text-2xl">💎</span>
-            <div>
-              <p class="font-bold text-white text-sm">바다 행운의 부적</p>
-              <p id="desc-fortune" class="text-[11px] text-amber-200/80">다이아몬드 코인 드롭 확률 증가!</p>
-            </div>
-          </div>
-          <button id="btn-buy-fortune" onclick="buyUpgrade('fortune', 400)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow popcap-btn">
-            400 🪙
-          </button>
-        </div>
-      </div>
-      <p class="text-[11px] text-slate-400">💡 코인은 물고기들이 낳거나 달팽이가 모아줍니다.</p>
-    </div>
-  </div>
-
   <!-- ==================== SPECIES DOCK ==================== -->
   <footer id="bottom-dock" class="aquarium-ui absolute bottom-3 left-0 right-0 z-30 px-3 sm:px-6 pointer-events-auto">
     <div class="max-w-4xl mx-auto bg-slate-900/90 backdrop-blur-xl border border-sky-400/40 rounded-3xl p-3 shadow-2xl">
       <div class="flex items-center justify-between px-2 mb-2">
         <div class="flex items-center space-x-2">
-          <span class="text-xs uppercase tracking-wider font-bold text-sky-400" id="dock-ocean-title">대서양 고래 & 백상아리 도감</span>
-          <span class="bg-sky-500/20 text-sky-300 text-[10px] px-2 py-0.5 rounded-full font-bold">생물을 수조에 넣어보세요</span>
+          <span class="text-xs uppercase tracking-wider font-bold text-sky-400" id="dock-ocean-title">바다 생물 도감</span>
+          <div class="flex items-center space-x-1.5">
+            <button type="button" class="cat-tab" data-cat="shark" onclick="switchCategory('shark')">🦈 상어</button>
+            <button type="button" class="cat-tab" data-cat="whale" onclick="switchCategory('whale')">🐋 고래</button>
+            <button type="button" class="cat-tab" data-cat="fish" onclick="switchCategory('fish')">🐟 물고기</button>
+            <button type="button" class="cat-tab" data-cat="friends" onclick="switchCategory('friends')">🐢 바다 친구들</button>
+          </div>
         </div>
         <button type="button" onclick="clearTank()" class="text-[11px] text-slate-400 hover:text-rose-400 transition font-bold px-2.5 py-1 rounded-full bg-white/5 hover:bg-rose-500/10 border border-white/10">
           🗑️ 수조 비우기
@@ -319,8 +291,8 @@
           <span class="text-sm">발음 듣기</span>
         </button>
         <button id="modal-buy-btn" type="button" onclick="buyCurrentAnimalFromModal()" class="bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black py-2.5 rounded-xl shadow flex items-center justify-center space-x-1.5 active:scale-95 transition">
-          <span>🪙</span>
-          <span id="modal-buy-text" class="text-sm">입양하기</span>
+          <span>✏️</span>
+          <span id="modal-buy-text" class="text-sm">글자 맞춰 입양</span>
         </button>
       </div>
     </div>
@@ -342,6 +314,21 @@
       </div>
       <div id="quiz-options-grid" class="grid grid-cols-2 gap-3 mt-3"></div>
       <div id="quiz-feedback" class="mt-3 py-2 px-3 rounded-xl font-bold text-xs hidden transition-all"></div>
+    </div>
+  </div>
+
+  <!-- ==================== ✏️ 글자 맞춰 입양 ==================== -->
+  <div id="spell-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/85 backdrop-blur-md hidden">
+    <div class="relative w-full max-w-xl bg-gradient-to-b from-sky-900 via-slate-900 to-indigo-950 border-2 border-amber-300/70 rounded-3xl p-4 sm:p-5 shadow-2xl text-white text-center max-h-[96vh] overflow-y-auto hide-scrollbar">
+      <button type="button" onclick="closeSpellModal()" aria-label="닫기" class="absolute top-3 right-3 w-11 h-11 rounded-full bg-white/10 text-slate-200 text-xl font-black">✕</button>
+      <span class="bg-amber-400/20 text-amber-200 border border-amber-300/40 text-sm px-3 py-1 rounded-full font-bold">✏️ 글자 맞춰 입양하기</span>
+      <canvas id="spellCanvas" width="360" height="195" class="block mx-auto h-32 sm:h-36 mt-1"></canvas>
+      <div class="flex items-center justify-center space-x-2 mb-2">
+        <p id="spell-msg" class="text-base sm:text-lg font-bold text-sky-100">이름을 듣고 글자를 순서대로 눌러요</p>
+        <button type="button" onclick="speakSpellName()" aria-label="이름 다시 듣기" class="w-11 h-11 rounded-full bg-amber-400/25 border border-amber-300/40 text-xl">🔊</button>
+      </div>
+      <div id="spell-slots" class="flex items-center justify-center gap-1.5 mb-4"></div>
+      <div id="spell-tiles" class="flex flex-wrap items-center justify-center gap-2.5 pb-2"></div>
     </div>
   </div>
 
@@ -418,7 +405,6 @@
     const FOOD_MAX = 40;           // 화면 먹이 최대 수
     const bgCache = { key: '', sea: null, sand: null };
     const coins = [];
-    let goldCoins = 100; // 초기 시작 코인
 
     // 업그레이드 상태
     const upgrades = {
@@ -428,6 +414,7 @@
     };
 
     let currentOcean = 'atlantic';
+    let currentCategory = 'shark';
     let isCinemaMode = false;
     let isMuted = false;
     let audioCtx = null;
@@ -611,7 +598,7 @@
         fact: '사자의 갈기처럼 화려한 지느러미 가시 끝에는 자신을 지키는 방어용 침이 숨겨져 있어요.'
       },
       seahorse: {
-        id: 'seahorse', krName: '빅벨리 해마', enName: 'Big-belly Seahorse', phonetic: '[ 빅벨리 시호스 ]',
+        id: 'seahorse', krName: '해마 (빅벨리 해마)', enName: 'Big-belly Seahorse', phonetic: '[ 빅벨리 시호스 ]',
         ocean: '인도양', baseScale: 0.70, price: 30, length: '20 ~ 35 cm', weight: '30 ~ 60 g', diet: '소형 갑각류',
         diverScale: '약 0.2배', diverBarWidth: '20%', isWhale: false, isShark: false,
         anatomyHighlights: ['불룩 나온 뚱뚱한 배', '왕관 모양 머리 돌기', '해초를 잡는 나선형 꼬리'],
@@ -637,17 +624,130 @@
         diverScale: '약 1.2배', diverBarWidth: '35%', isWhale: false, isShark: false,
         anatomyHighlights: ['이마에 솟아오른 큼직한 혹', '통통하고 널찍한 체구'],
         fact: '산호초의 수호자! 산호를 갉아먹는 성게와 불가사리를 먹어 산호초 숲을 건강하게 지켜줘요.'
+      },
+      mako_shark: {
+        id: 'mako_shark', krName: '청상아리', enName: 'Shortfin Mako Shark', phonetic: '[ 쇼트핀 마코 샤크 ]',
+        baseScale: 0.86, price: 50, length: '2.5 ~ 4 m', weight: '60 ~ 500 kg', diet: '참치, 오징어',
+        diverScale: '약 2배', diverBarWidth: '48%', isWhale: false, isShark: true,
+        anatomyHighlights: ['광택이 도는 푸른 등', '뾰족한 주둥이와 초승달 꼬리'],
+        fact: '상어 중에서 가장 빠른 헤엄꾼으로 알려져 있어요. 물 위로 높이 뛰어오르기도 해요!'
+      },
+      lemon_shark: {
+        id: 'lemon_shark', krName: '레몬상어', enName: 'Lemon Shark', phonetic: '[ 레몬 샤크 ]',
+        baseScale: 0.84, price: 50, length: '2.4 ~ 3.4 m', weight: '90 ~ 180 kg', diet: '물고기, 게',
+        diverScale: '약 1.6배', diverBarWidth: '42%', isWhale: false, isShark: true,
+        anatomyHighlights: ['레몬처럼 노르스름한 몸', '크기가 비슷한 등지느러미 2개'],
+        fact: '몸이 노란빛이라 레몬상어예요. 자기가 태어난 곳 근처로 돌아와 새끼를 낳아요.'
+      },
+      nurse_shark: {
+        id: 'nurse_shark', krName: '너스상어', enName: 'Nurse Shark', phonetic: '[ 너스 샤크 ]',
+        baseScale: 0.82, price: 50, length: '2.2 ~ 3 m', weight: '90 ~ 150 kg', diet: '게, 조개, 작은 물고기',
+        diverScale: '약 1.4배', diverBarWidth: '40%', isWhale: false, isShark: true,
+        anatomyHighlights: ['입 앞의 수염 2가닥', '몸 뒤쪽의 둥근 등지느러미', '아주 긴 위쪽 꼬리'],
+        fact: '낮에는 바닥에 모여 쉬고 밤에 사냥해요. 입 앞의 수염으로 모래 속 먹이를 찾아요.'
+      },
+      saw_shark: {
+        id: 'saw_shark', krName: '톱상어', enName: 'Sawshark', phonetic: '[ 소 샤크 ]',
+        baseScale: 0.74, price: 50, length: '1 ~ 1.5 m', weight: '5 ~ 10 kg', diet: '작은 물고기, 새우',
+        diverScale: '약 0.7배', diverBarWidth: '28%', isWhale: false, isShark: true,
+        anatomyHighlights: ['톱처럼 이빨이 난 긴 주둥이', '주둥이 가운데의 수염 2가닥'],
+        fact: '톱 같은 주둥이를 휘둘러 먹이를 잡아요. 주둥이의 수염으로 바닥의 먹이를 느껴요.'
+      },
+      bottlenose_dolphin: {
+        id: 'bottlenose_dolphin', krName: '큰돌고래', enName: 'Bottlenose Dolphin', phonetic: '[ 보틀노즈 돌핀 ]',
+        baseScale: 0.84, price: 50, length: '2 ~ 4 m', weight: '150 ~ 650 kg', diet: '물고기, 오징어',
+        diverScale: '약 1.7배', diverBarWidth: '42%', isWhale: true, isShark: false,
+        anatomyHighlights: ['병처럼 짧고 굵은 부리', '둥근 이마', '낫 모양 등지느러미'],
+        fact: '돌고래마다 자기만의 휘파람 소리가 있어서 이름처럼 서로를 알아봐요!'
+      },
+      common_dolphin: {
+        id: 'common_dolphin', krName: '참돌고래', enName: 'Common Dolphin', phonetic: '[ 커먼 돌핀 ]',
+        baseScale: 0.8, price: 50, length: '1.7 ~ 2.6 m', weight: '70 ~ 135 kg', diet: '정어리, 오징어',
+        diverScale: '약 1.2배', diverBarWidth: '36%', isWhale: true, isShark: false,
+        anatomyHighlights: ['옆구리의 노란색·회색 모래시계 무늬', '가늘고 긴 부리'],
+        fact: '수백 마리가 무리를 지어 다니기도 하고, 배 옆에서 파도를 타며 놀기도 해요.'
+      },
+      finless_porpoise: {
+        id: 'finless_porpoise', krName: '상괭이', enName: 'Finless Porpoise', phonetic: '[ 핀리스 포포이스 ]',
+        baseScale: 0.74, price: 50, length: '1.5 ~ 2 m', weight: '30 ~ 70 kg', diet: '작은 물고기, 새우',
+        diverScale: '약 1배', diverBarWidth: '33%', isWhale: true, isShark: false,
+        anatomyHighlights: ['등지느러미가 없는 매끈한 등', '부리 없이 둥근 머리', '웃는 듯한 입'],
+        fact: '우리나라 서해와 남해에 사는 작은 고래 친구예요. 웃는 얼굴로 유명해요!'
+      },
+      fin_whale: {
+        id: 'fin_whale', krName: '참고래', enName: 'Fin Whale', phonetic: '[ 핀 웨일 ]',
+        baseScale: 1.0, price: 50, length: '18 ~ 26 m', weight: '40 ~ 80 톤', diet: '크릴새우, 작은 물고기',
+        diverScale: '약 12배', diverBarWidth: '96%', isWhale: true, isShark: false,
+        anatomyHighlights: ['길고 날씬한 몸', '턱에서 배까지 이어진 주름', '꼬리 쪽의 등지느러미'],
+        fact: '대왕고래 다음으로 큰 동물이에요. 몸이 날씬해서 아주 빠르게 헤엄쳐요.'
+      },
+      bluefin_tuna: {
+        id: 'bluefin_tuna', krName: '참치', enName: 'Bluefin Tuna', phonetic: '[ 블루핀 튜나 ]',
+        baseScale: 0.84, price: 50, length: '2 ~ 3 m', weight: '250 ~ 450 kg', diet: '고등어, 오징어',
+        diverScale: '약 1.4배', diverBarWidth: '40%', isWhale: false, isShark: false,
+        anatomyHighlights: ['어뢰처럼 매끈한 몸', '꼬리 앞의 노란 작은 지느러미들', '초승달 꼬리'],
+        fact: '평생 쉬지 않고 헤엄쳐요. 먼 바다를 건너 아주 멀리까지 여행하는 물고기예요.'
+      },
+      ocean_sunfish: {
+        id: 'ocean_sunfish', krName: '개복치', enName: 'Ocean Sunfish', phonetic: '[ 오션 선피시 ]',
+        baseScale: 0.82, price: 50, length: '1.8 ~ 3 m', weight: '250 ~ 1000 kg', diet: '해파리',
+        diverScale: '약 1.5배', diverBarWidth: '40%', isWhale: false, isShark: false,
+        anatomyHighlights: ['동그랗고 납작한 몸', '위아래로 긴 지느러미', '꼬리 대신 있는 물결 모양 키'],
+        fact: '세상에서 가장 무거운 물고기 중 하나예요. 물 위에 옆으로 누워 햇볕을 쬐기도 해요.'
+      },
+      sailfish: {
+        id: 'sailfish', krName: '돛새치', enName: 'Sailfish', phonetic: '[ 세일피시 ]',
+        baseScale: 0.84, price: 50, length: '2 ~ 3 m', weight: '50 ~ 100 kg', diet: '정어리, 오징어',
+        diverScale: '약 1.5배', diverBarWidth: '40%', isWhale: false, isShark: false,
+        anatomyHighlights: ['배의 돛처럼 큰 등지느러미', '창처럼 긴 주둥이'],
+        fact: '돛 같은 등지느러미를 활짝 펴서 물고기 떼를 한곳으로 몰아요. 아주 빠른 물고기예요.'
+      },
+      pufferfish: {
+        id: 'pufferfish', krName: '복어', enName: 'Pufferfish', phonetic: '[ 퍼퍼피시 ]',
+        baseScale: 0.66, price: 50, length: '20 ~ 50 cm', weight: '0.2 ~ 2 kg', diet: '조개, 게',
+        diverScale: '약 0.2배', diverBarWidth: '20%', isWhale: false, isShark: false,
+        anatomyHighlights: ['둥글둥글한 몸', '단단한 이빨이 있는 작은 입'],
+        fact: '위험하면 물을 꿀꺽 마셔 공처럼 커져요. 몸에 독이 있어서 조심해야 해요.'
+      },
+      moray_eel: {
+        id: 'moray_eel', krName: '곰치', enName: 'Moray Eel', phonetic: '[ 모레이 일 ]',
+        baseScale: 0.78, price: 50, length: '1 ~ 2 m', weight: '5 ~ 30 kg', diet: '문어, 물고기',
+        diverScale: '약 0.8배', diverBarWidth: '30%', isWhale: false, isShark: false,
+        anatomyHighlights: ['뱀처럼 긴 몸', '등에서 꼬리까지 이어진 지느러미', '뾰족한 이빨'],
+        fact: '바위틈에 숨어 살아요. 목 안쪽에 두 번째 턱이 있어서 먹이를 끌어당겨요!'
+      },
+      salmon: {
+        id: 'salmon', krName: '연어', enName: 'Salmon', phonetic: '[ 새먼 ]',
+        baseScale: 0.72, price: 50, length: '60 ~ 100 cm', weight: '3 ~ 10 kg', diet: '작은 물고기, 새우',
+        diverScale: '약 0.4배', diverBarWidth: '26%', isWhale: false, isShark: false,
+        anatomyHighlights: ['은빛 몸과 검은 점', '꼬리 앞의 작은 기름지느러미'],
+        fact: '바다에서 자란 뒤 자기가 태어난 강으로 거슬러 올라가 알을 낳아요.'
+      },
+      blue_tang: {
+        id: 'blue_tang', krName: '블루탱', enName: 'Blue Tang', phonetic: '[ 블루 탱 ]',
+        baseScale: 0.62, price: 50, length: '15 ~ 30 cm', weight: '300 ~ 600 g', diet: '해조류, 플랑크톤',
+        diverScale: '손바닥 크기', diverBarWidth: '16%', isWhale: false, isShark: false,
+        anatomyHighlights: ['선명한 파란 몸', '몸의 검은 무늬', '노란 꼬리'],
+        fact: '산호초에 살아요. 꼬리 앞에 날카로운 가시가 있어서 자기 몸을 지켜요.'
+      },
+      flounder: {
+        id: 'flounder', krName: '넙치 (광어)', enName: 'Flounder', phonetic: '[ 플라운더 ]',
+        baseScale: 0.7, price: 50, length: '40 ~ 80 cm', weight: '1 ~ 5 kg', diet: '작은 물고기, 새우',
+        diverScale: '약 0.3배', diverBarWidth: '24%', isWhale: false, isShark: false,
+        anatomyHighlights: ['납작한 몸', '한쪽에 모인 두 눈', '몸을 둘러싼 지느러미'],
+        fact: '어릴 때는 눈이 양쪽에 있지만, 자라면서 한쪽으로 옮겨 가요. 모래와 똑같은 색으로 숨어요.'
       }
     };
 
-    const OCEAN_LISTS = {
-      atlantic: ['humpback_whale', 'blue_whale', 'orca', 'great_white_shark', 'sperm_whale', 'beluga', 'narwhal', 'bowhead_whale', 'gray_whale', 'minke_whale'],
-      indian: [
-        'whale_shark', 'manta_ray', 'sea_turtle', 'hammerhead_shark', 'tiger_shark',
-        'thresher_shark', 'blacktip_shark', 'dugong', 'clownfish',
-        'lionfish', 'seahorse', 'giant_octopus', 'moon_jellyfish', 'humphead_wrasse'
-      ]
+    // 생물 분류 (대서양/인도양은 배경만 바뀝니다)
+    const CATEGORY_LISTS = {
+      shark: ['great_white_shark', 'whale_shark', 'hammerhead_shark', 'tiger_shark', 'thresher_shark', 'blacktip_shark', 'mako_shark', 'lemon_shark', 'nurse_shark', 'saw_shark'],
+      whale: ['humpback_whale', 'blue_whale', 'fin_whale', 'sperm_whale', 'orca', 'bottlenose_dolphin', 'common_dolphin', 'finless_porpoise', 'beluga', 'narwhal', 'bowhead_whale', 'gray_whale', 'minke_whale'],
+      fish: ['clownfish', 'blue_tang', 'pufferfish', 'seahorse', 'lionfish', 'salmon', 'flounder', 'moray_eel', 'humphead_wrasse', 'bluefin_tuna', 'sailfish', 'ocean_sunfish', 'manta_ray'],
+      friends: ['sea_turtle', 'dugong', 'giant_octopus', 'moon_jellyfish']
     };
+    const CATEGORY_LABELS = { shark: '🦈 상어', whale: '🐋 고래', fish: '🐟 물고기', friends: '🐢 바다 친구들' };
+    const ALL_SPECIES_IDS = Object.values(CATEGORY_LISTS).flat();
     /* 3. PROCEDURAL RENDERERS (추가 생물 렌더러 연동) */
     function renderCreatureShape(cctx, speciesId, timeVal) {
       cctx.save();
@@ -681,7 +781,7 @@
         case 'moon_jellyfish': drawIStockMoonJelly(cctx, timeVal); break;
         case 'humphead_wrasse': drawIStockHumpheadWrasse(cctx, timeVal); break;
         case 'custom_fish': drawCustomFishRender(cctx, timeVal); break;
-        default: drawIStockHumpback(cctx, timeVal);
+        default: (EXTRA_RENDERERS[speciesId] || drawIStockHumpback)(cctx, timeVal);
       }
       cctx.restore();
     }
@@ -698,55 +798,6 @@
       // 머리가 왼쪽을 향하도록 배치 (기본 규격 160x90)
       ctx.drawImage(customFishImageData, -85, -48, 170, 96);
       ctx.restore();
-    }
-
-    // 신규: 북극고래 (Bowhead Whale)
-    function drawIStockBowhead(ctx, t) {
-      drawIStockSpermWhale(ctx, t);
-      // 거대한 활 모양 흰색 턱 패치
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(-105, 12, 18, 9, 0.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 신규: 귀신고래 (Gray Whale)
-    function drawIStockGrayWhale(ctx, t) {
-      drawIStockHumpback(ctx, t);
-      // 온몸에 덮인 회색 따개비 반점
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      for (let i = -70; i < 90; i += 18) {
-        ctx.beginPath(); ctx.arc(i, -15 + (i % 6), 3.5, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-
-    // 신규: 밍크고래 (Minke Whale)
-    function drawIStockMinkeWhale(ctx, t) {
-      drawIStockBlueWhale(ctx, t);
-      // 가슴지느러미 중앙 흰색 밴드
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-35, 18, 12, 6);
-    }
-
-    // 신규: 환도상어 (Thresher Shark) - 몸길이 절반의 채찍 꼬리
-    function drawIStockThresher(ctx, t) {
-      const tailWave = Math.sin(t * 1.8) * 12;
-      drawIStockGreatWhite(ctx, t);
-      // 긴 채찍 꼬리 상엽
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(146, 0);
-      ctx.quadraticCurveTo(180, -45 + tailWave, 215, -95 + tailWave * 1.5);
-      ctx.stroke();
-    }
-
-    // 신규: 흑기흉상어 (Blacktip Reef Shark)
-    function drawIStockBlacktip(ctx, t) {
-      drawIStockGreatWhite(ctx, t);
-      // 등지느러미 끝 제트블랙 점
-      ctx.fillStyle = '#020617';
-      ctx.beginPath(); ctx.arc(44, -68, 5.5, 0, Math.PI * 2); ctx.fill();
     }
 
     // iStock 스타일 평온하고 감성적인 고래 눈
@@ -775,936 +826,1431 @@
       ctx.restore();
     }
 
-    // 1. 혹등고래 (iStock 3번째 고래 완벽 고증: 도톰한 배주름 주머니 + 긴 날개 지느러미 + 반대편 지느러미 + 톱니 꼬리)
-    function drawIStockHumpback(ctx, t) {
-      const tailWag = Math.sin(t * 2.8) * 6.5;
-      const finWave = Math.sin(t * 2.2) * 0.15;
+    /* ===== 실제 체형 기반 고래·상어 렌더러 (머리는 왼쪽, 꼬리는 오른쪽) =====
+       - 고래: 꼬리날개가 수평(위아래로 침), 배주름은 턱에서 배꼽까지 세로로 길게
+       - 상어: 꼬리지느러미가 수직(좌우로 침), 입은 주둥이 아래, 아가미 5개, 큰 가슴지느러미 */
 
-      // [원근감] 반대편 몸통 너머 가슴지느러미
+    // 점 목록을 부드러운 닫힌 곡선으로 연결 (몸통 실루엣)
+    function smoothClosedPath(ctx, pts) {
+      const n = pts.length;
+      ctx.beginPath();
+      ctx.moveTo((pts[n - 1][0] + pts[0][0]) / 2, (pts[n - 1][1] + pts[0][1]) / 2);
+      for (let i = 0; i < n; i++) {
+        const p = pts[i], q = pts[(i + 1) % n];
+        ctx.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2);
+      }
+      ctx.closePath();
+    }
+
+    function polyPath(ctx, pts) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.closePath();
+    }
+
+    function bezPoint(p0, p1, p2, p3, s) {
+      const u = 1 - s;
+      return [
+        u * u * u * p0[0] + 3 * u * u * s * p1[0] + 3 * u * s * s * p2[0] + s * s * s * p3[0],
+        u * u * u * p0[1] + 3 * u * u * s * p1[1] + 3 * u * s * s * p2[1] + s * s * s * p3[1]
+      ];
+    }
+
+    // 몸통에 붙은 지느러미: 채우기는 닫힌 모양, 테두리는 바깥쪽만 그려서 이음새 없이 자연스럽게
+    function bodyFin(ctx, build, fill, stroke, lw) {
+      ctx.beginPath(); build(ctx);
+      ctx.fillStyle = fill; ctx.fill();
+      ctx.beginPath(); build(ctx);
+      ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke();
+    }
+
+    // 지느러미 끝만 검게 칠하기 (흑기흉상어)
+    function finTip(ctx, build, cx, cy, r, color) {
       ctx.save();
-      ctx.translate(-22, 6);
-      ctx.rotate(-0.35 - finWave * 0.5);
-      ctx.fillStyle = '#103752';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.bezierCurveTo(12, 22, 28, 48, 16, 68);
-      ctx.bezierCurveTo(4, 58, -4, 30, 0, 0);
-      ctx.closePath();
-      ctx.fill();
+      ctx.beginPath(); build(ctx); ctx.clip();
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
+    }
 
-      // [1] 도톰한 하얀색 턱밑 배주름(Pleats) 주머니 (아래로 볼록한 풍성한 볼륨)
-      ctx.fillStyle = '#f8fafc';
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.moveTo(-118, 4);
-      ctx.bezierCurveTo(-90, 52, -20, 56, 25, 24); // 풍선처럼 둥글고 깊은 턱밑 주머니
-      ctx.bezierCurveTo(10, 15, -40, 10, -118, 4);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 배주름 줄무늬 (iStock 스타일 세로 곡선)
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 2.0;
-      for (let p = -105; p <= 10; p += 14) {
-        ctx.beginPath();
-        ctx.moveTo(p, 6);
-        ctx.quadraticCurveTo(p + 14, 42, p + 28, 16);
-        ctx.stroke();
-      }
-
-      // [2] 청록빛 짙은 몸통 (iStock 실루엣: 유려한 아치형 등선 + 등 혹 + 낫형 지느러미 + 넓은 플루크)
-      const bodyGrad = ctx.createLinearGradient(0, -45, 0, 30);
-      bodyGrad.addColorStop(0, '#245a7a');
-      bodyGrad.addColorStop(0.5, '#184360');
-      bodyGrad.addColorStop(1, '#0e2b40');
-
-      ctx.fillStyle = bodyGrad;
-      ctx.strokeStyle = '#061622';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.moveTo(-125, -2); // 주둥이 끝
-      // 풍성하고 둥근 등선 (직선이 아닌 부드러운 호)
-      ctx.bezierCurveTo(-115, -34, -45, -46, 35, -34);
-      ctx.quadraticCurveTo(60, -30, 68, -45); // 낫 모양 등지느러미
-      ctx.quadraticCurveTo(72, -32, 82, -22);
-      ctx.bezierCurveTo(108, -14, 130, -6, 148, 0 + tailWag); // 꼬리 자루
-
-      // 위아래로 넓고 우아하게 펼쳐진 꼬리 플루크 (iStock 톱니 엣지)
-      ctx.lineTo(182, -36 + tailWag * 1.3);
-      ctx.bezierCurveTo(168, -12 + tailWag, 162, 0 + tailWag, 166, 0 + tailWag);
-      ctx.bezierCurveTo(162, 0 + tailWag, 168, 12 + tailWag, 182, 36 + tailWag * 1.3);
-      ctx.lineTo(148, 0 + tailWag);
-
-      // 하단 배선 및 미병부
-      ctx.bezierCurveTo(125, 14, 80, 20, 25, 24);
-      ctx.bezierCurveTo(-20, 22, -80, 16, -118, 4);
-      ctx.quadraticCurveTo(-124, 2, -125, -2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // [3] iStock 고유의 하얀색 도트 텍스처 (자연스러운 점박이 배열)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-      [
-        [-95, -22], [-75, -28], [-55, -30], [-35, -32], [-15, -30], [5, -28], [25, -24], [45, -20],
-        [-85, -14], [-65, -18], [-45, -20], [-25, -18], [-5, -16], [15, -14], [35, -10], [55, -8],
-        [-75, -6], [-55, -8], [-35, -8], [-15, -6], [5, -4], [25, -2], [75, -12], [95, -8], [115, -4]
-      ].forEach(([dx, dy]) => {
-        ctx.beginPath(); ctx.arc(dx, dy, 2.2, 0, Math.PI * 2); ctx.fill();
-      });
-
-      // 주둥이 결절 혹(Tubercles)
-      ctx.fillStyle = '#fef08a';
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 1.4;
-      [[-122, -4], [-116, -12], [-106, -20], [-94, -26], [-118, 2], [-106, 6]].forEach(([bx, by]) => {
-        ctx.beginPath(); ctx.arc(bx, by, 3.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      });
-
-      // [4] 앞쪽 메인 가슴지느러미 (몸길이 1/3, 우아하게 휘어지는 날개, 밑면 화이트)
+    // 고래의 잎사귀형 가슴지느러미
+    function leafFin(ctx, x, y, len, wid, ang, fill, stroke, lw, opt = {}) {
+      const curl = opt.curl || 0;
+      const P0 = [0, -wid * 0.5], P1 = [len * 0.35, -wid * 0.75], P2 = [len * 0.8, -wid * 0.4 + curl * 0.5], P3 = [len, curl];
       ctx.save();
-      ctx.translate(-30, 8);
-      ctx.rotate(0.35 + finWave);
-
-      const finGrad = ctx.createLinearGradient(0, 0, 35, 75);
-      finGrad.addColorStop(0, '#245a7a');
-      finGrad.addColorStop(0.4, '#184360');
-      finGrad.addColorStop(0.7, '#e2e8f0');
-      finGrad.addColorStop(1, '#ffffff');
-
-      ctx.fillStyle = finGrad;
-      ctx.strokeStyle = '#061622';
-      ctx.lineWidth = 2.8;
+      ctx.translate(x, y);
+      ctx.rotate(ang);
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.bezierCurveTo(18, 28, 38, 58, 28, 86); // 우아한 물결 굴곡
-      ctx.quadraticCurveTo(12, 82, -4, 56);
-      ctx.quadraticCurveTo(-10, 28, 0, 0);
+      ctx.moveTo(P0[0], P0[1]);
+      ctx.bezierCurveTo(P1[0], P1[1], P2[0], P2[1], P3[0], P3[1]);
+      ctx.bezierCurveTo(len * 0.82, wid * 0.4 + curl * 0.5, len * 0.3, wid * 0.62, 0, wid * 0.5);
       ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 지느러미 끝 결절 돌기
-      ctx.fillStyle = '#fef08a';
-      ctx.beginPath(); ctx.arc(26, 80, 2.4, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(20, 60, 2.4, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-
-      // 감성적인 눈 & 입선
-      drawWhaleEye(ctx, -88, -6, 5.0, false);
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2.4;
-      ctx.beginPath();
-      ctx.moveTo(-122, -2);
-      ctx.quadraticCurveTo(-95, 8, -75, 4);
-      ctx.stroke();
-    }
-
-    // 2. 대왕고래 (iStock 맨 위 첫 번째 블루 웨일 완벽 복원: 둥글고 깊은 U자형 턱주머니 + 우아한 블루 아치)
-    function drawIStockBlueWhale(ctx, t) {
-      const tailWag = Math.sin(t * 2.4) * 5.5;
-
-      // 반대편 가슴지느러미
-      ctx.save();
-      ctx.translate(-26, 8);
-      ctx.rotate(-0.4);
-      ctx.fillStyle = '#084b74';
-      ctx.beginPath();
-      ctx.ellipse(8, 24, 10, 30, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      // [1] 깊고 둥글게 볼록한 턱밑 배주름 영역 (iStock 최상단 원본의 특징)
-      ctx.fillStyle = '#bae6fd';
-      ctx.strokeStyle = '#03253a';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.moveTo(-130, 2);
-      ctx.bezierCurveTo(-100, 56, -10, 58, 35, 24);
-      ctx.bezierCurveTo(15, 12, -40, 8, -130, 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 배주름 라인
-      ctx.strokeStyle = '#0284c7';
-      ctx.lineWidth = 1.8;
-      for (let p = -118; p <= 15; p += 15) {
-        ctx.beginPath();
-        ctx.moveTo(p, 4);
-        ctx.quadraticCurveTo(p + 15, 42, p + 30, 16);
-        ctx.stroke();
+      ctx.fillStyle = fill; ctx.fill();
+      if (opt.band) {
+        ctx.save(); ctx.clip();
+        ctx.fillStyle = opt.band;
+        ctx.fillRect(len * 0.3, -wid, len * 0.26, wid * 2);
+        ctx.restore();
       }
-
-      // [2] 둥글고 도톰한 코발트블루 몸통 (iStock 부드러운 아치 곡선)
-      const blueGrad = ctx.createLinearGradient(0, -45, 0, 30);
-      blueGrad.addColorStop(0, '#0284c7');
-      blueGrad.addColorStop(0.5, '#0369a1');
-      blueGrad.addColorStop(1, '#075985');
-
-      ctx.fillStyle = blueGrad;
-      ctx.strokeStyle = '#03253a';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.moveTo(-138, -2);
-      ctx.bezierCurveTo(-125, -38, -40, -46, 45, -34); // 도톰하고 부드러운 등선
-      ctx.bezierCurveTo(90, -26, 120, -18, 128, -30); // 꼬리쪽 작은 등지느러미
-      ctx.quadraticCurveTo(132, -22, 138, -14);
-      ctx.bezierCurveTo(155, -8, 175, -2, 188, 0 + tailWag); // 꼬리 자루
-
-      // iStock 부채꼴 꼬리지느러미
-      ctx.lineTo(218, -34 + tailWag * 1.3);
-      ctx.bezierCurveTo(204, -10 + tailWag, 198, 0 + tailWag, 202, 0 + tailWag);
-      ctx.bezierCurveTo(198, 0 + tailWag, 204, 10 + tailWag, 218, 34 + tailWag * 1.3);
-      ctx.lineTo(188, 0 + tailWag);
-
-      // 하단 배선
-      ctx.bezierCurveTo(155, 12, 100, 20, 35, 24);
-      ctx.bezierCurveTo(-20, 22, -80, 16, -130, 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // iStock 흰색 별자리 도트 패턴
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      [
-        [-105, -20], [-85, -26], [-65, -30], [-45, -32], [-25, -30], [-5, -28], [15, -24], [35, -20], [65, -16],
-        [-95, -12], [-75, -18], [-55, -20], [-35, -18], [-15, -16], [5, -14], [25, -10], [55, -8], [85, -10],
-        [-85, -4], [-65, -6], [-45, -6], [-25, -4], [-5, -2], [15, 0], [45, 2], [105, -6], [135, -4]
-      ].forEach(([mx, my]) => {
-        ctx.beginPath(); ctx.arc(mx, my, 2.2, 0, Math.PI * 2); ctx.fill();
-      });
-
-      // 앞쪽 가슴지느러미
-      ctx.save();
-      ctx.translate(-35, 10);
-      ctx.rotate(0.38);
-      ctx.fillStyle = '#0284c7';
-      ctx.strokeStyle = '#03253a';
-      ctx.lineWidth = 2.6;
-      ctx.beginPath();
-      ctx.ellipse(12, 26, 11, 32, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-
-      // iStock 특유의 평온하게 지그시 감은 눈
-      drawWhaleEye(ctx, -105, -8, 5.0, true);
-    }
-
-    // 3. 범고래 (도톰하고 탄탄한 유선형 체구 + 1.8m 높은 직립 등지느러미 + 패들 지느러미 2개)
-    function drawIStockOrca(ctx, t) {
-      const tailWag = Math.sin(t * 3.2) * 6.5;
-
-      // 반대편 가슴지느러미
-      ctx.fillStyle = '#090d16';
-      ctx.beginPath();
-      ctx.ellipse(-18, -12, 12, 24, -0.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 순백색 배 패치
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.moveTo(-85, 4);
-      ctx.bezierCurveTo(-30, 42, 35, 36, 95, 10);
-      ctx.lineTo(90, 0);
-      ctx.quadraticCurveTo(20, 6, -85, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 피아노 블랙 몸통 (둥근 멜론 이마 + 도톰한 목둘레 + 수직 1.8m 등지느러미)
-      const orcaGrad = ctx.createLinearGradient(0, -42, 0, 30);
-      orcaGrad.addColorStop(0, '#1e293b');
-      orcaGrad.addColorStop(0.5, '#0f172a');
-      orcaGrad.addColorStop(1, '#020617');
-
-      ctx.fillStyle = orcaGrad;
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.moveTo(-102, 2);
-      ctx.bezierCurveTo(-105, -34, -45, -44, 15, -32); // 도톰한 등선
-      ctx.lineTo(24, -82); // 높고 위엄 있는 직립 등지느러미
-      ctx.quadraticCurveTo(40, -64, 46, -22);
-      ctx.bezierCurveTo(75, -16, 100, -8, 122, 0 + tailWag); // 꼬리 자루
-
-      // 초승달 꼬리 플루크
-      ctx.lineTo(152, -32 + tailWag * 1.3);
-      ctx.bezierCurveTo(140, -10 + tailWag, 135, 0 + tailWag, 138, 0 + tailWag);
-      ctx.bezierCurveTo(135, 0 + tailWag, 140, 10 + tailWag, 152, 32 + tailWag * 1.3);
-      ctx.lineTo(122, 0 + tailWag);
-
-      // 하단 배선
-      ctx.bezierCurveTo(95, 18, 55, 30, -10, 32);
-      ctx.bezierCurveTo(-55, 32, -90, 20, -102, 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 등 뒤 회색 안장 무늬 (Saddle Patch)
-      ctx.fillStyle = '#64748b';
-      ctx.beginPath();
-      ctx.ellipse(54, -14, 22, 9, -0.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 순백색 타원형 안반 (Eye Patch)
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(-68, -16, 18, 8, -0.25, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 앞쪽 둥근 패들 가슴지느러미
-      ctx.fillStyle = '#0f172a';
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.ellipse(-28, 16, 14, 30, 0.45, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      drawWhaleEye(ctx, -80, -4, 5.0, false);
-    }
-
-    // 4. 백상아리 (도톰한 럭비공 방추형 체형 + 정삼각형 1등지느러미 + 아가미 + 꼬리)
-    function drawIStockGreatWhite(ctx, t) {
-      const tailWag = Math.sin(t * 3.6) * 7.5;
-
-      // 반대편 가슴지느러미
-      ctx.fillStyle = '#1e293b';
-      ctx.beginPath();
-      ctx.moveTo(-24, -6);
-      ctx.lineTo(-4, -40);
-      ctx.lineTo(2, -8);
-      ctx.closePath();
-      ctx.fill();
-
-      // 하얀 배
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.moveTo(-98, 4);
-      ctx.bezierCurveTo(-30, 38, 45, 28, 115, 2);
-      ctx.lineTo(115, -2);
-      ctx.quadraticCurveTo(30, 4, -98, -2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 등 몸통
-      const sharkGrad = ctx.createLinearGradient(0, -42, 0, 25);
-      sharkGrad.addColorStop(0, '#64748b');
-      sharkGrad.addColorStop(0.5, '#475569');
-      sharkGrad.addColorStop(1, '#1e293b');
-
-      ctx.fillStyle = sharkGrad;
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.moveTo(-112, 2); // 묵직한 원추형 주둥이
-      ctx.bezierCurveTo(-85, -32, -20, -38, 22, -28);
-      ctx.lineTo(44, -72); // 날카롭고 높은 제1등지느러미
-      ctx.quadraticCurveTo(58, -58, 60, -18);
-      ctx.lineTo(96, -12);
-      ctx.lineTo(104, -25); // 제2등지느러미
-      ctx.lineTo(110, -10);
-      ctx.bezierCurveTo(124, -6, 138, -2, 146, 0 + tailWag); // 꼬리자루 킬(Keel)
-
-      // 상하 대칭형 초승달 꼬리지느러미
-      ctx.lineTo(176, -38 + tailWag * 1.3);
-      ctx.bezierCurveTo(160, -10 + tailWag, 155, 0 + tailWag, 158, 0 + tailWag);
-      ctx.bezierCurveTo(155, 0 + tailWag, 160, 10 + tailWag, 176, 38 + tailWag * 1.3);
-      ctx.lineTo(146, 0 + tailWag);
-
-      // 하단 배선 및 뒷배지느러미
-      ctx.lineTo(108, 10);
-      ctx.lineTo(100, 20); // 배지느러미
-      ctx.lineTo(94, 10);
-      ctx.bezierCurveTo(65, 18, 20, 28, -30, 28);
-      ctx.bezierCurveTo(-70, 28, -98, 18, -112, 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 상어 이빨
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 1.0;
-      for (let tooth = -94; tooth < -55; tooth += 8) {
-        ctx.beginPath();
-        ctx.moveTo(tooth, 4); ctx.lineTo(tooth + 4, 11); ctx.lineTo(tooth + 8, 4);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
-      }
-
-      // 선명한 5개 아가미 슬릿
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2.0;
-      for (let g = 0; g < 5; g++) {
-        ctx.beginPath();
-        ctx.moveTo(-45 + g * 5, -8);
-        ctx.lineTo(-49 + g * 5, 10);
-        ctx.stroke();
-      }
-
-      // 앞쪽 메인 가슴지느러미
-      ctx.fillStyle = '#475569';
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.moveTo(-30, 10);
-      ctx.lineTo(-4, 52);
-      ctx.quadraticCurveTo(6, 48, 8, 36);
-      ctx.lineTo(-14, 10);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      drawWhaleEye(ctx, -86, -6, 5.0, false);
-    }
-
-    // 5. 홍살귀상어
-    function drawIStockHammerhead(ctx, t) {
-      const tailWag = Math.sin(t * 3.4) * 7.5;
-
-      // 반대편 가슴지느러미
-      ctx.fillStyle = '#334155';
-      ctx.beginPath();
-      ctx.moveTo(-10, -6); ctx.lineTo(6, -34); ctx.lineTo(8, -6); ctx.closePath();
-      ctx.fill();
-
-      // 몸통
-      const grad = ctx.createLinearGradient(0, -38, 0, 25);
-      grad.addColorStop(0, '#64748b');
-      grad.addColorStop(0.5, '#475569');
-      grad.addColorStop(1, '#cbd5e1');
-
-      ctx.fillStyle = grad;
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.moveTo(-35, -4);
-      ctx.bezierCurveTo(-15, -28, 20, -28, 42, -22);
-      ctx.lineTo(62, -68); // 낫 모양 등지느러미
-      ctx.quadraticCurveTo(74, -56, 74, -16);
-      ctx.lineTo(110, -8);
-      ctx.lineTo(116, -20);
-      ctx.lineTo(122, -6);
-      ctx.bezierCurveTo(138, -2, 150, 0, 160, 0 + tailWag);
-      ctx.lineTo(188, -34 + tailWag * 1.4); // 비대칭 꼬리
-      ctx.bezierCurveTo(174, -10 + tailWag, 170, 0 + tailWag, 172, 0 + tailWag);
-      ctx.lineTo(182, 22 + tailWag * 1.4);
-      ctx.lineTo(160, 0 + tailWag);
-      ctx.bezierCurveTo(120, 16, 70, 26, 12, 24);
-      ctx.bezierCurveTo(-15, 24, -28, 14, -35, 4);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // T자형 해머 헤드
-      const headGrad = ctx.createLinearGradient(0, -36, 0, 36);
-      headGrad.addColorStop(0, '#334155');
-      headGrad.addColorStop(0.5, '#64748b');
-      headGrad.addColorStop(1, '#334155');
-      ctx.fillStyle = headGrad;
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 3.0;
-      ctx.beginPath();
-      ctx.roundRect(-75, -36, 40, 72, 14);
-      ctx.fill();
-      ctx.stroke();
-
-      // 메인 가슴지느러미
-      ctx.fillStyle = '#475569';
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.moveTo(-15, 10); ctx.lineTo(10, 46); ctx.lineTo(22, 34); ctx.lineTo(0, 10); ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      drawWhaleEye(ctx, -56, -28, 4.5, false);
-      drawWhaleEye(ctx, -56, 28, 4.5, false);
-    }
-
-    // 6. 향유고래 (도톰한 사각 통나무 이마 + 이빨 턱 + 등줄기 혹돌기)
-    function drawIStockSpermWhale(ctx, t) {
-      const tailWag = Math.sin(t * 2.6) * 6.0;
-
-      // 반대편 지느러미
-      ctx.fillStyle = '#1e293b';
-      ctx.beginPath();
-      ctx.ellipse(-20, -14, 8, 22, -0.3, 0, Math.PI * 2);
-      ctx.fill();
-
-      const grad = ctx.createLinearGradient(0, -42, 0, 30);
-      grad.addColorStop(0, '#475569');
-      grad.addColorStop(0.5, '#334155');
-      grad.addColorStop(1, '#1e293b');
-
-      ctx.fillStyle = grad;
-      ctx.strokeStyle = '#090d16';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.moveTo(-115, 16); // 언더슬렁 하악
-      ctx.lineTo(-120, -36); // 거대한 절벽 사각 이마
-      ctx.quadraticCurveTo(-95, -44, -35, -40);
-      ctx.bezierCurveTo(25, -38, 65, -28, 98, -16);
-      // 등줄기 삼각 혹 돌기(Knuckles)
-      ctx.lineTo(108, -24); ctx.lineTo(115, -16);
-      ctx.lineTo(124, -22); ctx.lineTo(131, -14);
-      ctx.bezierCurveTo(148, -8, 168, -2, 180, 0 + tailWag);
-      ctx.lineTo(210, -34 + tailWag * 1.3);
-      ctx.bezierCurveTo(196, -10 + tailWag, 192, 0 + tailWag, 196, 0 + tailWag);
-      ctx.lineTo(210, 34 + tailWag * 1.3);
-      ctx.lineTo(180, 0 + tailWag);
-      ctx.bezierCurveTo(140, 16, 75, 28, 0, 28);
-      ctx.lineTo(-55, 28); ctx.lineTo(-108, 20); ctx.lineTo(-108, 16);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 하악 치아
-      ctx.fillStyle = '#ffffff';
-      for (let tooth = -104; tooth < -60; tooth += 7) {
-        ctx.fillRect(tooth, 17, 3.5, 5);
-      }
-
-      // 앞쪽 가슴지느러미
-      ctx.fillStyle = '#334155';
-      ctx.strokeStyle = '#090d16';
-      ctx.lineWidth = 2.6;
-      ctx.beginPath();
-      ctx.ellipse(-32, 18, 11, 26, 0.4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      drawWhaleEye(ctx, -58, 4, 5.0, false);
-    }
-
-    // 7. 벨루가 (둥글고 도톰한 순백 등 + 가슴지느러미)
-    function drawIStockBeluga(ctx, t) {
-      const tailWag = Math.sin(t * 3.0) * 6.0;
-
-      // 반대편 가슴지느러미
-      ctx.fillStyle = '#cbd5e1';
-      ctx.beginPath();
-      ctx.ellipse(-15, -10, 10, 22, -0.4, 0, Math.PI * 2);
-      ctx.fill();
-
-      const grad = ctx.createLinearGradient(0, -36, 0, 30);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.65, '#f1f5f9');
-      grad.addColorStop(1, '#cbd5e1');
-
-      ctx.fillStyle = grad;
-      ctx.strokeStyle = '#64748b';
-      ctx.lineWidth = 3.0;
-
-      ctx.beginPath();
-      ctx.moveTo(-85, 4);
-      ctx.bezierCurveTo(-94, -28, -50, -38, -5, -30);
-      ctx.bezierCurveTo(35, -28, 70, -18, 100, -4);
-      ctx.lineTo(128, -26 + tailWag);
-      ctx.bezierCurveTo(116, -8 + tailWag, 112, 0 + tailWag, 115, 0 + tailWag);
-      ctx.lineTo(128, 26 + tailWag);
-      ctx.lineTo(100, 4);
-      ctx.bezierCurveTo(65, 24, 20, 32, -25, 30);
-      ctx.bezierCurveTo(-58, 28, -80, 18, -85, 4);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 메인 가슴지느러미
-      ctx.fillStyle = '#f8fafc';
-      ctx.strokeStyle = '#64748b';
-      ctx.lineWidth = 2.6;
-      ctx.beginPath();
-      ctx.ellipse(-26, 14, 11, 25, 0.45, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      drawWhaleEye(ctx, -62, -4, 4.5, false);
-    }
-
-    // 8. 일각고래 (iStock 4번째 나왈 원본 복원: 나선형 엄니 + 도톰한 체형)
-    function drawIStockNarwhal(ctx, t) {
-      const tusk = ctx.createLinearGradient(-85, -4, -165, -4);
-      tusk.addColorStop(0, '#fef08a');
-      tusk.addColorStop(1, '#ffffff');
-      ctx.fillStyle = tusk;
-      ctx.strokeStyle = '#ca8a04';
-      ctx.lineWidth = 2.4;
-      ctx.beginPath();
-      ctx.moveTo(-82, -7); ctx.lineTo(-168, -4); ctx.lineTo(-82, -1);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      drawIStockBeluga(ctx, t);
-    }
-
-    // 9. 고래상어
-    function drawIStockWhaleShark(ctx, t) {
-      const tailWag = Math.sin(t * 2.8) * 6.5;
-
-      // 반대편 가슴지느러미
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.ellipse(-15, -14, 12, 26, -0.4, 0, Math.PI * 2);
-      ctx.fill();
-
-      const grad = ctx.createLinearGradient(0, -38, 0, 28);
-      grad.addColorStop(0, '#38bdf8');
-      grad.addColorStop(0.5, '#1e293b');
-      grad.addColorStop(1, '#0f172a');
-
-      ctx.fillStyle = grad;
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.moveTo(-110, 4);
-      ctx.lineTo(-112, -22);
-      ctx.quadraticCurveTo(-75, -38, -10, -34);
-      ctx.bezierCurveTo(35, -32, 75, -22, 110, -10);
-      ctx.lineTo(128, -34); ctx.lineTo(135, -20); // 등지느러미
-      ctx.bezierCurveTo(150, -10, 168, -2, 182, 0 + tailWag);
-      ctx.lineTo(210, -34 + tailWag * 1.3);
-      ctx.bezierCurveTo(196, -10 + tailWag, 192, 0 + tailWag, 196, 0 + tailWag);
-      ctx.lineTo(210, 34 + tailWag * 1.3);
-      ctx.lineTo(182, 0 + tailWag);
-      ctx.bezierCurveTo(145, 18, 75, 28, 0, 28);
-      ctx.bezierCurveTo(-65, 28, -100, 18, -110, 4);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 은하수 흰 점박이
-      ctx.fillStyle = '#ffffff';
-      for (let x = -75; x < 110; x += 16) {
-        for (let y = -18; y < 18; y += 10) {
-          ctx.beginPath(); ctx.arc(x + (y % 4), y, 2.6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke();
+      if (opt.knobs) {
+        // 혹등고래 가슴지느러미 앞쪽 가장자리의 울퉁불퉁한 혹
+        ctx.fillStyle = fill;
+        ctx.lineWidth = lw * 0.6;
+        for (let k = 1; k <= 7; k++) {
+          const [kx, ky] = bezPoint(P0, P1, P2, P3, k / 8.5);
+          ctx.beginPath(); ctx.arc(kx, ky, wid * 0.14, Math.PI, Math.PI * 2); ctx.fill(); ctx.stroke();
         }
       }
-
-      // 앞쪽 가슴지느러미
-      ctx.fillStyle = '#1e293b';
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.ellipse(-30, 14, 13, 30, 0.45, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      drawWhaleEye(ctx, -95, -10, 5.0, false);
+      ctx.restore();
     }
 
-    // 10. 타이거 샤크
-    function drawIStockTigerShark(ctx, t) {
-      drawIStockGreatWhite(ctx, t);
-      ctx.strokeStyle = 'rgba(15, 23, 42, 0.65)';
-      ctx.lineWidth = 3.6;
-      for (let s = -50; s < 65; s += 14) {
-        ctx.beginPath();
-        ctx.moveTo(s, -22); ctx.lineTo(s - 8, 16);
-        ctx.stroke();
+    // 고래 꼬리날개: 수평으로 펼쳐져 있어 옆에서 보면 납작하게 보이고, 위아래로 칩니다
+    function whaleFluke(ctx, x, y, len, ang, farFill, nearFill, stroke, lw) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(ang);
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = lw;
+      // 반대편 날개 (원근 때문에 얇게 보임)
+      ctx.beginPath();
+      ctx.moveTo(-10, -4);
+      ctx.bezierCurveTo(len * 0.3, -len * 0.06, len * 0.72, -len * 0.1, len * 0.98, -len * 0.18);
+      ctx.bezierCurveTo(len * 0.9, -len * 0.07, len * 0.8, -len * 0.02, len * 0.7, -len * 0.01);
+      ctx.lineTo(-10, 1);
+      ctx.closePath();
+      ctx.fillStyle = farFill; ctx.fill(); ctx.stroke();
+      // 앞쪽 날개
+      ctx.beginPath();
+      ctx.moveTo(-10, 4);
+      ctx.bezierCurveTo(len * 0.3, len * 0.1, len * 0.72, len * 0.17, len * 1.04, len * 0.28);
+      ctx.bezierCurveTo(len * 0.94, len * 0.12, len * 0.82, len * 0.04, len * 0.7, len * 0.01);
+      ctx.lineTo(-10, -1);
+      ctx.closePath();
+      ctx.fillStyle = nearFill; ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+
+    // 어두운 몸 위에서도 눈이 잘 보이도록 밝은 테두리
+    function ringEye(ctx, x, y, r) {
+      ctx.fillStyle = 'rgba(225, 232, 238, 0.9)';
+      ctx.beginPath(); ctx.arc(x, y, r + 1.6, 0, Math.PI * 2); ctx.fill();
+      drawWhaleEye(ctx, x, y, r, false);
+    }
+
+    // 고래 공통 렌더러
+    function drawWhaleBase(ctx, t, s) {
+      const lw = s.lw || 3;
+      const beat = Math.sin(t * (s.beatSpeed || 2.4)) * (s.beatAmp || 0.14);
+      const outline = s.top.concat(s.bottom);
+      if (s.behind) s.behind(ctx, t);
+      whaleFluke(ctx, s.fluke[0], s.fluke[1], s.fluke[2], beat, s.flukeFar || s.mid, s.flukeNear || s.back, s.outlineColor, lw * 0.9);
+      const g = ctx.createLinearGradient(0, s.gradTop || -40, 0, s.gradBot || 30);
+      g.addColorStop(0, s.back);
+      g.addColorStop(1, s.mid);
+      smoothClosedPath(ctx, outline);
+      ctx.fillStyle = g; ctx.fill();
+      if (s.paint) {
+        ctx.save(); smoothClosedPath(ctx, outline); ctx.clip();
+        s.paint(ctx, t);
+        ctx.restore();
       }
+      smoothClosedPath(ctx, outline);
+      ctx.strokeStyle = s.outlineColor; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke();
+      if (s.front) s.front(ctx, t);
     }
 
-    // 11. 대왕쥐가오리
-    function drawIStockMantaRay(ctx, t) {
-      const flap = Math.sin(t * 2.8) * 22;
-
-      const grad = ctx.createLinearGradient(0, -65, 0, 65);
-      grad.addColorStop(0, '#0f172a');
-      grad.addColorStop(0.5, '#334155');
-      grad.addColorStop(1, '#0f172a');
-
-      ctx.fillStyle = grad;
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.moveTo(-58, -10);
-      ctx.quadraticCurveTo(-40, -34, -12, -48);
-      ctx.lineTo(18, -92 + flap); // 거대한 날개
-      ctx.quadraticCurveTo(34, -70 + flap * 0.7, 40, -28);
-      ctx.lineTo(60, -4);
-      ctx.lineTo(135, -2 + Math.sin(t * 3) * 6); // 꼬리
-      ctx.lineTo(60, 4);
-      ctx.lineTo(40, 28);
-      ctx.quadraticCurveTo(34, 70 - flap * 0.7, 18, 92 - flap);
-      ctx.lineTo(-12, 48);
-      ctx.quadraticCurveTo(-40, 34, -58, 10);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 두각
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath(); ctx.moveTo(-56, -14); ctx.quadraticCurveTo(-76, -24, -84, -12); ctx.quadraticCurveTo(-70, -4, -56, -6); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(-56, 14); ctx.quadraticCurveTo(-76, 24, -84, 12); ctx.quadraticCurveTo(-70, 4, -56, 6); ctx.closePath(); ctx.fill();
-
-      drawWhaleEye(ctx, -50, -18, 4.5, false);
-      drawWhaleEye(ctx, -50, 18, 4.5, false);
-    }
-
-    // 12. 매부리바다거북 (통통한 호박색 등딱지 + 힘찬 패들)
-    function drawIStockSeaTurtle(ctx, t) {
-      const paddle = Math.sin(t * 2.5) * 18;
-
-      ctx.fillStyle = '#d97706';
-      ctx.strokeStyle = '#78350f';
-      ctx.lineWidth = 2.8;
-
-      // 위쪽 앞다리
-      ctx.save();
-      ctx.translate(-18, -16);
-      ctx.rotate(-0.45 + paddle * 0.04);
-      ctx.beginPath();
-      ctx.ellipse(-16, -36, 15, 32, -0.3, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-      ctx.restore();
-
-      // 아래쪽 앞다리
-      ctx.save();
-      ctx.translate(-18, 16);
-      ctx.rotate(0.45 - paddle * 0.04);
-      ctx.beginPath();
-      ctx.ellipse(-16, 36, 15, 32, 0.3, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-      ctx.restore();
-
-      // 도톰한 등딱지
-      const shell = ctx.createRadialGradient(0, 0, 10, 0, 0, 50);
-      shell.addColorStop(0, '#fbbf24');
-      shell.addColorStop(0.5, '#d97706');
-      shell.addColorStop(1, '#78350f');
-
-      ctx.fillStyle = shell;
-      ctx.strokeStyle = '#451a03';
-      ctx.lineWidth = 3.6;
-
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 48, 38, 0, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-
-      // 등딱지 무늬
-      ctx.strokeStyle = '#fef08a';
-      ctx.lineWidth = 2.6;
-      [[-18, 0], [0, 0], [18, 0]].forEach(([cx, cy]) => {
-        ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.stroke();
+    // 1. 혹등고래: 통통한 몸, 몸길이 1/3의 긴 가슴지느러미, 머리 위 혹, 작은 혹 위 등지느러미
+    function drawIStockHumpback(ctx, t) {
+      const flap = Math.sin(t * 1.6) * 0.07;
+      const line = '#0b1520';
+      drawWhaleBase(ctx, t, {
+        top: [[-126, 2], [-122, -8], [-108, -18], [-85, -26], [-55, -32], [-20, -35], [15, -33], [48, -27], [78, -17], [104, -9], [124, -5]],
+        bottom: [[124, 3], [104, 7], [76, 16], [45, 28], [10, 37], [-28, 40], [-64, 36], [-94, 26], [-114, 15], [-124, 8]],
+        fluke: [120, -1, 64], flukeNear: '#d5dde4',
+        back: '#354b62', mid: '#1f2e3d', outlineColor: line, beatSpeed: 2.2,
+        behind(c) {
+          leafFin(c, -56, 16, 84, 15, 0.32 - flap, '#1a2734', line, 2.4);
+        },
+        paint(c) {
+          // 하얀 턱과 배
+          smoothClosedPath(c, [[-132, 6], [-100, 12], [-60, 16], [-20, 18], [20, 20], [55, 20], [80, 30], [80, 70], [-132, 70]]);
+          c.fillStyle = '#eef2f5'; c.fill();
+          // 턱에서 배꼽까지 길게 이어진 배주름
+          c.strokeStyle = '#9fadba'; c.lineWidth = 1.6;
+          for (let k = 0; k < 6; k++) {
+            c.beginPath();
+            c.moveTo(-122, 10 + k * 3);
+            c.quadraticCurveTo(-60, 20 + k * 4.5, 30, 24 + k * 3);
+            c.stroke();
+          }
+          // 등의 옅은 얼룩
+          c.fillStyle = 'rgba(200, 215, 228, 0.22)';
+          [[-30, -20, 9, 4], [10, -24, 7, 3], [45, -14, 8, 3], [-70, -18, 6, 3]].forEach(([x, y, rx, ry]) => {
+            c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.fill();
+          });
+        },
+        front(c) {
+          // 작은 혹 위의 등지느러미 (몸 뒤쪽 2/3 지점)
+          bodyFin(c, f => { f.moveTo(34, -29); f.quadraticCurveTo(50, -31, 57, -41); f.quadraticCurveTo(60, -31, 72, -23); }, '#33485e', line, 2.6);
+          // 머리와 아래턱의 혹(결절)
+          c.fillStyle = '#41596f'; c.strokeStyle = line; c.lineWidth = 1.2;
+          [[-118, -9], [-108, -15], [-97, -20], [-86, -23], [-112, -3], [-100, -9]].forEach(([x, y]) => {
+            c.beginPath(); c.arc(x, y, 2.6, 0, Math.PI * 2); c.fill(); c.stroke();
+          });
+          c.fillStyle = '#d7dee5';
+          [[-122, 6], [-114, 10]].forEach(([x, y]) => {
+            c.beginPath(); c.arc(x, y, 2.4, 0, Math.PI * 2); c.fill(); c.stroke();
+          });
+          // 입선
+          c.strokeStyle = line; c.lineWidth = 2.2;
+          c.beginPath(); c.moveTo(-125, 4); c.bezierCurveTo(-108, 5, -88, 3, -68, 8); c.stroke();
+          ringEye(c, -60, 0, 4.0);
+          // 몸길이 1/3에 달하는 긴 하얀 가슴지느러미
+          leafFin(c, -62, 20, 100, 18, 0.62 + flap, '#e9eef2', line, 2.6, { knobs: true });
+        }
       });
-
-      // 둥근 머리 & 부리
-      ctx.fillStyle = '#f59e0b';
-      ctx.strokeStyle = '#78350f';
-      ctx.lineWidth = 2.8;
-      ctx.beginPath();
-      ctx.ellipse(-54, 0, 20, 16, 0, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-
-      drawWhaleEye(ctx, -58, -4, 4.5, false);
     }
 
-    // 13. 듀공
-    function drawIStockDugong(ctx, t) {
-      const tailWag = Math.sin(t * 2.5) * 6;
-
-      const grad = ctx.createRadialGradient(-15, -12, 10, 0, 0, 85);
-      grad.addColorStop(0, '#94a3b8');
-      grad.addColorStop(0.5, '#64748b');
-      grad.addColorStop(1, '#475569');
-
-      ctx.fillStyle = grad;
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 3.0;
-
-      ctx.beginPath();
-      ctx.moveTo(-75, 6);
-      ctx.bezierCurveTo(-84, -28, -50, -40, -10, -32);
-      ctx.bezierCurveTo(30, -30, 60, -18, 85, -8);
-      ctx.lineTo(110, -26 + tailWag);
-      ctx.bezierCurveTo(98, -8 + tailWag, 94, 0 + tailWag, 98, 0 + tailWag);
-      ctx.lineTo(110, 26 + tailWag);
-      ctx.lineTo(85, 8);
-      ctx.bezierCurveTo(55, 28, 18, 34, -22, 32);
-      ctx.bezierCurveTo(-58, 30, -72, 22, -75, 6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      drawWhaleEye(ctx, -56, -6, 4.5, false);
+    // 2. 대왕고래: 아주 길고 날씬한 몸, 넓적한 U자 머리, 꼬리 쪽의 아주 작은 등지느러미, 회청색 얼룩
+    function drawIStockBlueWhale(ctx, t) {
+      const flap = Math.sin(t * 1.5) * 0.06;
+      const line = '#1c3550';
+      drawWhaleBase(ctx, t, {
+        top: [[-150, 3], [-146, -5], [-128, -13], [-98, -19], [-60, -23], [-20, -25], [20, -24], [60, -20], [96, -14], [126, -8], [150, -4]],
+        bottom: [[150, 3], [126, 7], [92, 13], [52, 20], [12, 25], [-32, 27], [-78, 25], [-114, 19], [-138, 12], [-148, 7]],
+        fluke: [146, -0.5, 56],
+        back: '#7697b8', mid: '#4d6d90', outlineColor: line, gradTop: -26, gradBot: 26, beatSpeed: 2.0,
+        behind(c) { leafFin(c, -74, 14, 34, 8, 0.3 - flap, '#3f5c7c', line, 2.2); },
+        paint(c) {
+          smoothClosedPath(c, [[-154, 6], [-120, 10], [-80, 13], [-40, 15], [0, 16], [30, 17], [40, 50], [-154, 50]]);
+          c.fillStyle = '#aec1d4'; c.fill();
+          c.strokeStyle = 'rgba(40, 70, 100, 0.5)'; c.lineWidth = 1.3;
+          for (let k = 0; k < 5; k++) {
+            c.beginPath(); c.moveTo(-146, 8 + k * 3); c.quadraticCurveTo(-70, 16 + k * 3, 20, 18 + k * 2); c.stroke();
+          }
+          // 대왕고래 특유의 얼룩덜룩한 무늬
+          [[-110, -10], [-84, -14], [-60, -6], [-40, -16], [-18, -8], [4, -18], [24, -6], [44, -14], [66, -4], [84, -10], [104, -2], [120, -6], [-96, 2], [-30, 4], [14, 6], [56, 6]].forEach(([x, y], i) => {
+            c.fillStyle = i % 2 ? 'rgba(215, 230, 245, 0.35)' : 'rgba(30, 55, 85, 0.22)';
+            c.beginPath(); c.ellipse(x, y, 6 + (i % 3) * 2, 3 + (i % 2), 0.2, 0, Math.PI * 2); c.fill();
+          });
+        },
+        front(c) {
+          // 꼬리 가까이 붙은 아주 작은 등지느러미
+          bodyFin(c, f => { f.moveTo(94, -14); f.quadraticCurveTo(104, -15, 110, -21); f.quadraticCurveTo(110, -14, 118, -10); }, '#6889ac', line, 2.2);
+          // 분수공 앞 융기
+          c.strokeStyle = line; c.lineWidth = 1.6;
+          c.beginPath(); c.moveTo(-112, -15); c.quadraticCurveTo(-104, -19, -96, -18); c.stroke();
+          c.lineWidth = 2.2;
+          c.beginPath(); c.moveTo(-149, 4); c.quadraticCurveTo(-120, 7, -90, 3); c.stroke();
+          drawWhaleEye(c, -84, -1, 4.0, false);
+          leafFin(c, -80, 15, 40, 9, 0.55 + flap, '#5c7da0', line, 2.2);
+        }
+      });
     }
 
-    // 14. 흰동가리 (니모)
-    function drawIStockClownfish(ctx, t) {
-      const wag = Math.sin(t * 4.5) * 7;
+    // 3. 범고래: 탄탄한 몸, 높이 솟은 등지느러미, 넓적한 노 모양 가슴지느러미, 눈 뒤 흰 반점
+    function drawIStockOrca(ctx, t) {
+      const flap = Math.sin(t * 1.8) * 0.07;
+      drawWhaleBase(ctx, t, {
+        top: [[-104, 4], [-102, -6], [-92, -16], [-74, -25], [-48, -31], [-18, -33], [14, -31], [40, -26], [64, -18], [86, -10], [102, -6]],
+        bottom: [[102, 3], [86, 7], [64, 15], [38, 24], [8, 31], [-26, 33], [-58, 29], [-82, 21], [-96, 13], [-103, 8]],
+        fluke: [98, -1, 46],
+        back: '#22252c', mid: '#0b0c10', outlineColor: '#000000', beatSpeed: 2.8,
+        behind(c) { leafFin(c, -50, 16, 30, 20, 0.45 - flap, '#050608', '#000000', 2.2); },
+        paint(c) {
+          c.fillStyle = '#ffffff';
+          // 흰 턱과 배
+          smoothClosedPath(c, [[-108, 6], [-90, 10], [-70, 13], [-40, 15], [-10, 17], [20, 19], [50, 17], [70, 14], [70, 60], [-108, 60]]); c.fill();
+          // 옆구리로 올라가는 흰 무늬
+          smoothClosedPath(c, [[12, 20], [30, 6], [50, -2], [66, 0], [70, 10], [56, 20]]); c.fill();
+          // 눈 뒤 흰 반점
+          c.beginPath(); c.ellipse(-55, -13, 15, 6, -0.18, 0, Math.PI * 2); c.fill();
+          // 등지느러미 뒤 회색 안장무늬
+          c.fillStyle = 'rgba(150, 158, 168, 0.85)';
+          c.beginPath(); c.ellipse(26, -27, 20, 6, 0.08, 0, Math.PI * 2); c.fill();
+        },
+        front(c) {
+          // 키 큰 삼각형 등지느러미 (수컷은 최대 1.8m)
+          bodyFin(c, f => { f.moveTo(-16, -32); f.quadraticCurveTo(-6, -50, 4, -90); f.quadraticCurveTo(12, -60, 22, -30); }, '#1b1e24', '#000000', 2.8);
+          c.strokeStyle = '#000000'; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-103, 6); c.quadraticCurveTo(-88, 9, -74, 6); c.stroke();
+          ringEye(c, -72, -4, 3.4);
+          leafFin(c, -56, 20, 38, 22, 0.95 + flap, '#15171c', '#000000', 2.6);
+        }
+      });
+    }
 
-      const orange = ctx.createRadialGradient(-10, -10, 8, 0, 0, 48);
-      orange.addColorStop(0, '#fed7aa');
-      orange.addColorStop(0.35, '#fb923c');
-      orange.addColorStop(1, '#c2410c');
+    // 6. 향유고래: 몸의 1/3을 차지하는 네모난 머리, 머리 밑에 쏙 들어간 가는 아래턱, 주름진 피부, 등 혹과 마디
+    function drawIStockSpermWhale(ctx, t) {
+      const flap = Math.sin(t * 1.6) * 0.07;
+      const line = '#141418';
+      drawWhaleBase(ctx, t, {
+        top: [[-129, -26], [-124, -37], [-104, -40], [-64, -39], [-30, -37], [0, -35], [30, -32], [58, -27], [74, -24], [88, -21], [100, -16], [112, -11], [126, -6]],
+        bottom: [[126, 3], [108, 8], [80, 16], [48, 24], [14, 30], [-20, 32], [-46, 29], [-66, 20], [-92, 12], [-118, 9], [-129, 4], [-131, -10]],
+        fluke: [122, -1, 64],
+        back: '#57565d', mid: '#38373d', outlineColor: line, gradTop: -40, gradBot: 30, beatSpeed: 2.1,
+        behind(c) { leafFin(c, -54, 14, 22, 9, 0.35 - flap, '#2b2a30', line, 2); },
+        paint(c) {
+          // 쭈글쭈글한 피부 주름
+          c.strokeStyle = 'rgba(20, 20, 24, 0.28)'; c.lineWidth = 1.4;
+          for (let i = 0; i < 9; i++) {
+            const x = -20 + i * 15, y = -20 + (i % 3) * 9;
+            c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 4, y - 3, x + 8, y); c.quadraticCurveTo(x + 12, y + 3, x + 16, y); c.stroke();
+          }
+          // 머리(경랍기관)의 은은한 광택
+          c.fillStyle = 'rgba(255, 255, 255, 0.08)';
+          c.beginPath(); c.ellipse(-90, -26, 34, 8, 0, 0, Math.PI * 2); c.fill();
+        },
+        front(c) {
+          // 낮은 등 혹 + 꼬리까지 이어지는 마디
+          bodyFin(c, f => { f.moveTo(56, -27); f.quadraticCurveTo(72, -36, 86, -22); }, '#4f4e55', line, 2.4);
+          c.fillStyle = '#48474d'; c.strokeStyle = line; c.lineWidth = 2;
+          [[95, -18], [104, -14], [112, -11], [120, -8]].forEach(([x, y]) => {
+            c.beginPath(); c.arc(x, y, 2.8, Math.PI, 0); c.fill(); c.stroke();
+          });
+          // 머리 앞 왼쪽의 분수공
+          c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-124, -36); c.lineTo(-115, -39); c.stroke();
+          // 가늘고 긴 아래턱과 이빨
+          c.fillStyle = '#dcd8cf'; c.lineWidth = 2.2;
+          c.beginPath();
+          c.moveTo(-124, 8);
+          c.quadraticCurveTo(-126, 17, -114, 18);
+          c.quadraticCurveTo(-86, 21, -58, 26);
+          c.quadraticCurveTo(-80, 15, -124, 8);
+          c.closePath(); c.fill(); c.stroke();
+          c.fillStyle = '#ffffff'; c.strokeStyle = line; c.lineWidth = 0.8;
+          for (let x = -118; x < -78; x += 6) {
+            const y = 10 + (x + 122) * 0.14;
+            c.beginPath(); c.moveTo(x, y); c.lineTo(x + 2, y - 5); c.lineTo(x + 4, y); c.closePath(); c.fill(); c.stroke();
+          }
+          ringEye(c, -60, 8, 3.6);
+          leafFin(c, -56, 18, 26, 11, 0.8 + flap, '#46454b', line, 2.2);
+        }
+      });
+    }
 
-      ctx.fillStyle = orange;
-      ctx.strokeStyle = '#7c2d12';
-      ctx.lineWidth = 2.8;
+    // 7. 벨루가: 순백색, 볼록한 멜론 이마, 짧은 부리, 목 주름, 등지느러미 없음
+    function drawIStockBeluga(ctx, t) {
+      const flap = Math.sin(t * 1.8) * 0.08;
+      const line = '#7b8a99';
+      drawWhaleBase(ctx, t, {
+        top: [[-94, 4], [-93, -2], [-86, -7], [-84, -15], [-73, -25], [-58, -29], [-44, -27], [-34, -22], [-18, -24], [12, -26], [42, -22], [68, -14], [88, -7], [102, -4]],
+        bottom: [[102, 3], [86, 8], [62, 16], [34, 25], [4, 30], [-28, 30], [-54, 26], [-72, 20], [-86, 13], [-93, 9]],
+        fluke: [98, -1, 42], flukeFar: '#d3dde6', flukeNear: '#f4f7fa',
+        back: '#ffffff', mid: '#dce5ec', outlineColor: line, lw: 2.8, beatSpeed: 2.6,
+        behind(c) { leafFin(c, -44, 16, 24, 13, 0.4 - flap, '#cfd9e2', line, 2, { curl: -5 }); },
+        paint(c) {
+          c.strokeStyle = 'rgba(123, 138, 153, 0.55)'; c.lineWidth = 1.6;
+          // 목 주름 (벨루가는 고개를 돌릴 수 있어요)
+          c.beginPath(); c.moveTo(-36, -20); c.quadraticCurveTo(-30, 0, -38, 24); c.stroke();
+          // 등지느러미 대신 낮은 등 능선
+          c.beginPath(); c.moveTo(10, -22); c.quadraticCurveTo(40, -19, 66, -11); c.stroke();
+          // 멜론 이마 하이라이트
+          c.fillStyle = 'rgba(255, 255, 255, 0.9)';
+          c.beginPath(); c.ellipse(-64, -20, 10, 5, -0.3, 0, Math.PI * 2); c.fill();
+        },
+        front(c) {
+          c.strokeStyle = '#6b7a89'; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-93, 5); c.quadraticCurveTo(-84, 11, -72, 5); c.stroke();
+          drawWhaleEye(c, -66, -6, 3.8, false);
+          leafFin(c, -50, 20, 28, 14, 0.85 + flap, '#f1f5f8', line, 2.2, { curl: -6 });
+        }
+      });
+    }
 
-      ctx.beginPath();
-      ctx.moveTo(-42, 0);
-      ctx.bezierCurveTo(-30, -30, 10, -30, 32, -12);
-      ctx.lineTo(50, -24 + wag);
-      ctx.bezierCurveTo(42, -8 + wag, 40, 0 + wag, 42, 0 + wag);
-      ctx.lineTo(50, 24 + wag);
-      ctx.lineTo(32, 12);
-      ctx.bezierCurveTo(10, 30, -30, 30, -42, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+    // 8. 일각고래: 회색 점박이 몸, 나선형 엄니(길게 자란 윗니), 등지느러미 없음
+    function drawIStockNarwhal(ctx, t) {
+      const flap = Math.sin(t * 1.8) * 0.08;
+      const line = '#262c32';
+      drawWhaleBase(ctx, t, {
+        top: [[-94, 3], [-93, -6], [-86, -16], [-70, -24], [-46, -27], [-20, -28], [10, -27], [40, -22], [66, -14], [86, -7], [100, -4]],
+        bottom: [[100, 3], [84, 8], [62, 16], [34, 25], [4, 30], [-28, 30], [-56, 26], [-76, 19], [-89, 11]],
+        fluke: [96, -1, 42],
+        back: '#56606a', mid: '#b3bbc2', outlineColor: line, lw: 2.8, gradTop: -28, gradBot: 30, beatSpeed: 2.6,
+        behind(c) {
+          // 나선형 엄니
+          c.fillStyle = '#f1e8cf'; c.strokeStyle = '#9c8a62'; c.lineWidth = 1.8;
+          c.beginPath(); c.moveTo(-88, -9); c.lineTo(-186, -16); c.lineTo(-88, -2); c.closePath(); c.fill(); c.stroke();
+          c.strokeStyle = 'rgba(156, 138, 98, 0.85)'; c.lineWidth = 1.2;
+          for (let x = -96; x > -180; x -= 8) {
+            const k = (x + 88) / -98;
+            const cy = -5.5 - k * 10.5, half = 3.5 * (1 - k);
+            c.beginPath(); c.moveTo(x + 2, cy - half); c.lineTo(x - 2, cy + half); c.stroke();
+          }
+          leafFin(c, -46, 14, 22, 10, 0.4 - flap, '#3c444c', line, 2, { curl: -4 });
+        },
+        paint(c) {
+          // 등은 진하고 배로 갈수록 옅어지는 점무늬
+          for (let i = 0; i < 46; i++) {
+            const x = -84 + (i * 37) % 180;
+            const y = -26 + (i * 13) % 50;
+            c.fillStyle = y < 0 ? 'rgba(25, 30, 35, 0.55)' : 'rgba(40, 46, 52, 0.28)';
+            c.beginPath(); c.ellipse(x, y, 2.2 + (i % 3), 1.6 + (i % 2), i, 0, Math.PI * 2); c.fill();
+          }
+        },
+        front(c) {
+          c.strokeStyle = line; c.lineWidth = 1.8;
+          c.beginPath(); c.moveTo(-92, 5); c.quadraticCurveTo(-84, 9, -76, 6); c.stroke();
+          ringEye(c, -72, -6, 3.6);
+          leafFin(c, -52, 18, 26, 12, 0.85 + flap, '#5e6872', line, 2.2, { curl: -5 });
+        }
+      });
+    }
 
-      // 하얀 줄무늬
-      [[-20, 18, 7], [6, 22, 8], [30, 14, 6]].forEach(([bx, bh, bw]) => {
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#020617';
-        ctx.lineWidth = 2.2;
+    // 북극고래: 등지느러미 없는 뚱뚱한 몸, 몸의 1/3인 큰 머리, 활처럼 휜 입, 흰 아래턱
+    function drawIStockBowhead(ctx, t) {
+      const flap = Math.sin(t * 1.5) * 0.06;
+      const line = '#050607';
+      drawWhaleBase(ctx, t, {
+        top: [[-126, 6], [-124, -6], [-114, -19], [-96, -27], [-74, -30], [-58, -30], [-46, -32], [-20, -39], [15, -40], [48, -33], [78, -22], [104, -11], [124, -5]],
+        bottom: [[124, 3], [104, 9], [76, 22], [44, 34], [8, 42], [-30, 44], [-66, 40], [-96, 30], [-116, 18], [-125, 11]],
+        fluke: [120, -1, 64],
+        back: '#2c3137', mid: '#15181c', outlineColor: line, beatSpeed: 2.0,
+        behind(c) { leafFin(c, -40, 22, 28, 16, 0.4 - flap, '#101215', line, 2.2); },
+        paint(c) {
+          // 흰 아래턱 무늬와 검은 점
+          c.fillStyle = '#f2f3f1';
+          c.beginPath(); c.ellipse(-104, 24, 24, 15, 0.25, 0, Math.PI * 2); c.fill();
+          c.fillStyle = '#1b1e22';
+          [[-112, 20], [-104, 27], [-98, 18], [-110, 31], [-94, 28], [-118, 25]].forEach(([x, y]) => {
+            c.beginPath(); c.arc(x, y, 2, 0, Math.PI * 2); c.fill();
+          });
+          // 꼬리자루의 회백색 띠
+          c.fillStyle = 'rgba(200, 205, 210, 0.5)';
+          c.beginPath(); c.ellipse(108, 0, 14, 7, 0, 0, Math.PI * 2); c.fill();
+        },
+        front(c) {
+          // 활처럼 크게 휜 입선 (영어 이름 Bowhead의 유래)
+          c.strokeStyle = line; c.lineWidth = 2.6;
+          c.beginPath(); c.moveTo(-125, 6); c.bezierCurveTo(-118, -16, -84, -20, -62, 8); c.stroke();
+          // 분수공 혹
+          c.strokeStyle = '#4a5058'; c.lineWidth = 1.6;
+          c.beginPath(); c.moveTo(-66, -29); c.quadraticCurveTo(-58, -33, -50, -30); c.stroke();
+          ringEye(c, -54, 12, 3.8);
+          leafFin(c, -46, 28, 30, 18, 0.8 + flap, '#1e2227', line, 2.4);
+        }
+      });
+    }
+
+    // 귀신고래: 등지느러미 없이 낮은 혹과 마디, 회색 바탕에 흰 얼룩과 따개비, 좁고 휜 머리
+    function drawIStockGrayWhale(ctx, t) {
+      const flap = Math.sin(t * 1.6) * 0.07;
+      const line = '#2b3138';
+      drawWhaleBase(ctx, t, {
+        top: [[-122, 6], [-118, -2], [-104, -12], [-82, -20], [-52, -27], [-18, -31], [18, -31], [50, -26], [70, -22], [92, -15], [110, -9], [124, -5]],
+        bottom: [[124, 3], [108, 8], [84, 16], [54, 26], [20, 33], [-18, 35], [-55, 31], [-86, 23], [-108, 15], [-120, 10]],
+        fluke: [120, -1, 54],
+        back: '#8a949e', mid: '#646e78', outlineColor: line, beatSpeed: 2.2,
+        behind(c) { leafFin(c, -56, 16, 28, 12, 0.35 - flap, '#535c65', line, 2.2); },
+        paint(c) {
+          // 흰 얼룩
+          c.fillStyle = 'rgba(236, 239, 241, 0.55)';
+          [[-90, -8, 8, 4], [-60, -16, 10, 5], [-30, -4, 12, 5], [-6, -20, 9, 4], [20, -8, 11, 5], [46, -16, 8, 4], [66, -2, 9, 4], [90, -6, 7, 3], [-74, 8, 9, 4], [-20, 14, 10, 4], [30, 12, 9, 4], [104, 0, 6, 3]].forEach(([x, y, rx, ry], i) => {
+            c.beginPath(); c.ellipse(x, y, rx, ry, i * 0.7, 0, Math.PI * 2); c.fill();
+          });
+          // 따개비 무리
+          c.fillStyle = '#ece6d4'; c.strokeStyle = '#6b6450'; c.lineWidth = 0.8;
+          [[-108, -8], [-104, -4], [-98, -10], [-88, -15], [-84, -11], [-40, -26], [-36, -22], [10, -27], [14, -24]].forEach(([x, y]) => {
+            c.beginPath(); c.arc(x, y, 2.3, 0, Math.PI * 2); c.fill(); c.stroke();
+          });
+          // 고래이 (주황빛 점)
+          c.fillStyle = '#d99a5b';
+          [[-100, -6], [-92, -12], [-38, -24]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 1.4, 0, Math.PI * 2); c.fill(); });
+          // 목 아래 짧은 홈 2개
+          c.strokeStyle = 'rgba(40, 46, 52, 0.6)'; c.lineWidth = 1.5;
+          [0, 5].forEach(k => { c.beginPath(); c.moveTo(-110, 13 + k); c.quadraticCurveTo(-96, 19 + k, -80, 19 + k); c.stroke(); });
+        },
+        front(c) {
+          // 등지느러미 대신 낮은 혹 + 울퉁불퉁한 등 마디
+          bodyFin(c, f => { f.moveTo(36, -27); f.quadraticCurveTo(50, -35, 64, -23); }, '#858f99', line, 2.4);
+          c.fillStyle = '#7d8791'; c.strokeStyle = line; c.lineWidth = 2;
+          [[74, -21], [84, -18], [94, -14], [103, -11], [112, -8]].forEach(([x, y]) => {
+            c.beginPath(); c.arc(x, y, 3, Math.PI, 0); c.fill(); c.stroke();
+          });
+          c.strokeStyle = line; c.lineWidth = 2.2;
+          c.beginPath(); c.moveTo(-120, 8); c.quadraticCurveTo(-98, 10, -78, 4); c.stroke();
+          drawWhaleEye(c, -72, -2, 4.0, false);
+          leafFin(c, -62, 19, 34, 14, 0.72 + flap, '#6c7680', line, 2.4);
+        }
+      });
+    }
+
+    // 밍크고래: 작고 날렵한 몸, 뾰족한 주둥이, 뚜렷한 낫 모양 등지느러미, 가슴지느러미의 흰 띠
+    function drawIStockMinkeWhale(ctx, t) {
+      const flap = Math.sin(t * 1.7) * 0.07;
+      const line = '#10161c';
+      drawWhaleBase(ctx, t, {
+        top: [[-124, 1], [-114, -6], [-96, -13], [-70, -19], [-38, -23], [-5, -24], [28, -22], [58, -17], [86, -11], [108, -6], [122, -4]],
+        bottom: [[122, 3], [106, 7], [82, 13], [52, 20], [18, 25], [-20, 26], [-58, 23], [-90, 16], [-110, 9], [-121, 5]],
+        fluke: [118, 0, 46],
+        back: '#434f5b', mid: '#28323c', outlineColor: line, gradTop: -24, gradBot: 24, beatSpeed: 2.6,
+        behind(c) { leafFin(c, -58, 12, 34, 9, 0.3 - flap, '#222b33', line, 2.2); },
+        paint(c) {
+          smoothClosedPath(c, [[-128, 4], [-90, 6], [-50, 8], [-10, 10], [30, 10], [70, 8], [100, 6], [100, 50], [-128, 50]]);
+          c.fillStyle = '#f1f4f6'; c.fill();
+          // 어깨의 옅은 회색 무늬
+          c.fillStyle = 'rgba(190, 202, 214, 0.5)';
+          c.beginPath(); c.ellipse(-30, -4, 24, 6, -0.25, 0, Math.PI * 2); c.fill();
+          c.beginPath(); c.ellipse(10, -2, 14, 4, -0.15, 0, Math.PI * 2); c.fill();
+          c.strokeStyle = 'rgba(120, 135, 150, 0.6)'; c.lineWidth = 1.2;
+          for (let k = 0; k < 4; k++) {
+            c.beginPath(); c.moveTo(-118, 7 + k * 3); c.quadraticCurveTo(-70, 14 + k * 3, -20, 16 + k * 2); c.stroke();
+          }
+        },
+        front(c) {
+          bodyFin(c, f => { f.moveTo(44, -19); f.quadraticCurveTo(60, -22, 70, -37); f.quadraticCurveTo(68, -24, 82, -13); }, '#38434e', line, 2.4);
+          c.strokeStyle = line; c.lineWidth = 2.2;
+          c.beginPath(); c.moveTo(-122, 3); c.quadraticCurveTo(-100, 5, -78, 2); c.stroke();
+          ringEye(c, -72, -3, 3.6);
+          leafFin(c, -62, 13, 40, 10, 0.6 + flap, '#2e3842', line, 2.2, { band: '#f4f6f8' });
+        }
+      });
+    }
+
+    /* ----- 상어 ----- */
+
+    // 상어 꼬리지느러미: 수직으로 서 있고 좌우로 흔들어서 옆에서 보면 폭이 변해요
+    function sharkTail(ctx, t, o) {
+      const sp = o.speed || 3.4;
+      const sway = 0.84 + 0.16 * Math.cos(t * sp);
+      const ux = Math.cos(o.upAng) * o.up, uy = -Math.sin(o.upAng) * o.up;
+      const lx = Math.cos(o.lowAng) * o.low, ly = Math.sin(o.lowAng) * o.low;
+      const r = o.root || 5;
+      const build = c => {
+        c.moveTo(-8, -r);
+        c.quadraticCurveTo(ux * 0.4, uy * 0.5 - r, ux, uy);
+        c.quadraticCurveTo(ux * 0.62, uy * 0.42, ux * 0.38, ly * 0.08);
+        c.quadraticCurveTo(lx * 0.62, ly * 0.4, lx, ly);
+        c.quadraticCurveTo(lx * 0.35, ly * 0.55, -8, r);
+        c.closePath();
+      };
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.rotate(Math.sin(t * sp) * 0.035);
+      ctx.scale(sway, 1);
+      ctx.beginPath(); build(ctx);
+      ctx.fillStyle = o.fill; ctx.fill();
+      if (o.tip) {
+        finTip(ctx, build, ux, uy, 22, o.tip);
+        finTip(ctx, build, lx, ly, 16, o.tip);
+      }
+      ctx.beginPath(); build(ctx);
+      ctx.strokeStyle = o.stroke; ctx.lineWidth = o.lw || 2.8; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.restore();
+    }
+
+    // 뒤로 젖혀진 큰 가슴지느러미
+    function sharkPectoral(ctx, t, x, y, s, fill, stroke, tip) {
+      const flap = Math.sin(t * 2) * 0.06;
+      const build = c => {
+        c.moveTo(-12, 0);
+        c.quadraticCurveTo(2, 24, 42, 46);
+        c.quadraticCurveTo(28, 30, 22, 18);
+        c.quadraticCurveTo(16, 6, 8, 2);
+        c.closePath();
+      };
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(flap);
+      ctx.scale(s, s);
+      ctx.beginPath(); build(ctx);
+      ctx.fillStyle = fill; ctx.fill();
+      if (tip) finTip(ctx, build, 42, 46, 24, tip);
+      ctx.beginPath(); build(ctx);
+      ctx.strokeStyle = stroke; ctx.lineWidth = 2.6 / s; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.restore();
+    }
+
+    // 작은 지느러미 (제2등지느러미·뒷지느러미·배지느러미). dir -1 = 위, 1 = 아래
+    function sharkSmallFin(ctx, x, y, h, dir, fill, stroke, tip) {
+      const w = h * 0.8;
+      const build = c => {
+        c.moveTo(x - w, y);
+        c.lineTo(x + w * 0.15, y + dir * h);
+        c.quadraticCurveTo(x + w * 0.25, y + dir * h * 0.35, x + w, y - dir);
+      };
+      bodyFin(ctx, build, fill, stroke, 2);
+      if (tip) finTip(ctx, build, x + w * 0.15, y + dir * h, h * 0.55, tip);
+    }
+
+    function sharkGills(ctx, xs, top, bot, color) {
+      ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+      xs.forEach(x => {
+        ctx.beginPath(); ctx.moveTo(x, top); ctx.quadraticCurveTo(x - 3, (top + bot) / 2, x - 1, bot); ctx.stroke();
+      });
+      ctx.lineCap = 'butt';
+    }
+
+    // 상어 공통 렌더러
+    function drawStandardShark(ctx, t, o) {
+      const L = o.outlineColor;
+      const outline = o.top.concat(o.bottom);
+      const p = o.pec;
+      // 반대편 가슴지느러미 (몸 뒤)
+      sharkPectoral(ctx, t + 0.6, p[0] + 8, p[1] - 2, p[2] * 0.8, o.farFin || o.mid, L, o.tipColor);
+      // 꼬리
+      if (o.tailFn) o.tailFn(ctx, t);
+      else sharkTail(ctx, t, Object.assign({ fill: o.fin, stroke: L, lw: 2.7, tip: o.tipColor }, o.tail));
+      // 몸통
+      const g = ctx.createLinearGradient(0, o.gradTop || -30, 0, o.gradBot || 20);
+      g.addColorStop(0, o.back); g.addColorStop(1, o.mid);
+      smoothClosedPath(ctx, outline); ctx.fillStyle = g; ctx.fill();
+      ctx.save(); smoothClosedPath(ctx, outline); ctx.clip();
+      polyPath(ctx, o.bellyLine); ctx.fillStyle = o.belly; ctx.fill();
+      if (o.paint) o.paint(ctx, t);
+      ctx.restore();
+      smoothClosedPath(ctx, outline);
+      ctx.strokeStyle = L; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
+      // 제1등지느러미
+      const d = o.d1;
+      const d1 = c => { c.moveTo(d[0], d[1]); c.quadraticCurveTo(d[2], d[3], d[4], d[5]); c.quadraticCurveTo(d[6], d[7], d[8], d[9]); };
+      bodyFin(ctx, d1, o.back, L, 2.8);
+      if (o.tipColor) finTip(ctx, d1, d[4], d[5], 13, o.tipColor);
+      // 작은 지느러미들
+      sharkSmallFin(ctx, o.d2[0], o.d2[1], o.d2[2], -1, o.back, L, o.tipColor);
+      if (o.anal) sharkSmallFin(ctx, o.anal[0], o.anal[1], o.anal[2], 1, o.fin, L, o.tipColor);
+      sharkSmallFin(ctx, o.pelvic[0], o.pelvic[1], o.pelvic[2], 1, o.fin, L, o.tipColor);
+      // 아가미 5개
+      sharkGills(ctx, o.gills, o.gillY[0], o.gillY[1], o.gillColor || 'rgba(15, 20, 25, 0.75)');
+      // 주둥이 아래쪽의 입
+      if (o.mouth) {
+        const m = o.mouth;
+        if (o.teeth) {
+          ctx.fillStyle = '#4a2630';
+          ctx.beginPath(); ctx.moveTo(m[0], m[1]); ctx.quadraticCurveTo(m[2], m[3] + 2, m[4], m[5]); ctx.quadraticCurveTo(m[2], m[3] - 4, m[0], m[1]); ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          for (let i = 1; i < 6; i++) {
+            const s = i / 6.5;
+            const tx = m[0] + (m[4] - m[0]) * s;
+            const ty = m[1] + (m[5] - m[1]) * s - 2 + Math.sin(s * Math.PI) * 1.5;
+            ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + 2.2, ty + 4.2); ctx.lineTo(tx + 4.4, ty); ctx.closePath(); ctx.fill();
+          }
+        }
+        ctx.strokeStyle = L; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(m[0], m[1]); ctx.quadraticCurveTo(m[2], m[3], m[4], m[5]); ctx.stroke();
+      }
+      if (o.eye) drawWhaleEye(ctx, o.eye[0], o.eye[1], o.eye[2], false);
+      if (o.extra) o.extra(ctx, t);
+      // 앞쪽 가슴지느러미
+      sharkPectoral(ctx, t, p[0], p[1], p[2], o.fin, L, o.tipColor);
+    }
+
+    // 4. 백상아리: 통통한 어뢰형 몸, 뾰족한 원뿔 주둥이, 큰 삼각형 등지느러미, 거의 대칭인 초승달 꼬리
+    function drawIStockGreatWhite(ctx, t) {
+      drawStandardShark(ctx, t, {
+        top: [[-116, 4], [-112, -4], [-100, -13], [-80, -21], [-52, -28], [-20, -31], [12, -29], [44, -23], [74, -14], [100, -7], [124, -4]],
+        bottom: [[124, 3], [102, 7], [78, 13], [50, 20], [18, 26], [-16, 28], [-48, 26], [-76, 20], [-96, 13], [-110, 8]],
+        back: '#6e7a88', mid: '#56626f', fin: '#5b6774', farFin: '#3f4954', outlineColor: '#1b222a', belly: '#f5f7f9',
+        bellyLine: [[-120, 7], [-100, 5], [-84, 8], [-66, 4], [-48, 8], [-30, 5], [-10, 9], [10, 6], [30, 9], [52, 6], [74, 7], [96, 4], [130, 2], [130, 60], [-120, 60]],
+        tail: { x: 120, y: 0, up: 56, upAng: 1.0, low: 46, lowAng: 0.95, root: 5 },
+        d1: [-18, -30, -8, -58, 10, -72, 10, -46, 30, -26],
+        d2: [94, -6, 9], anal: [94, 6, 9], pelvic: [50, 19, 12],
+        gills: [-68, -62, -56, -50, -44], gillY: [-12, 9],
+        mouth: [-106, 9, -92, 18, -74, 16], teeth: true,
+        eye: [-88, -7, 4.2],
+        pec: [-36, 12, 1.0],
+        extra(c) {
+          // 꼬리자루 용골
+          c.strokeStyle = '#1b222a'; c.lineWidth = 1.6;
+          c.beginPath(); c.moveTo(106, 0); c.lineTo(124, 0); c.stroke();
+        }
+      });
+    }
+
+    // 5. 홍살귀상어: 옆으로 넓게 펼쳐진 망치 머리(양 끝에 눈), 매우 높은 낫 모양 등지느러미, 긴 위쪽 꼬리
+    function drawIStockHammerhead(ctx, t) {
+      const L = '#1f2a2e';
+      drawStandardShark(ctx, t, {
+        top: [[-80, -2], [-74, -10], [-58, -17], [-34, -22], [-6, -24], [24, -22], [52, -17], [78, -10], [102, -5], [124, -3]],
+        bottom: [[124, 3], [102, 6], [76, 11], [46, 17], [14, 21], [-18, 22], [-46, 19], [-66, 13], [-78, 6]],
+        back: '#7f8f94', mid: '#66767b', fin: '#68787d', farFin: '#4c5a5f', outlineColor: L, belly: '#f2f5f5',
+        bellyLine: [[-84, 4], [-60, 6], [-30, 7], [0, 8], [30, 7], [60, 6], [90, 4], [130, 2], [130, 60], [-84, 60]],
+        tail: { x: 120, y: 0, up: 70, upAng: 0.66, low: 28, lowAng: 1.0, root: 4 },
+        d1: [-16, -23, -8, -62, 18, -82, 6, -52, 24, -21],
+        d2: [96, -4, 8], anal: [94, 5, 9], pelvic: [46, 16, 10],
+        gills: [-60, -55, -50, -45, -40], gillY: [-12, 8],
+        pec: [-34, 12, 0.85],
+        extra(c) {
+          // 망치 머리 (살짝 위에서 본 원근: 먼 쪽 끝은 위, 가까운 쪽 끝은 아래)
+          const g = c.createLinearGradient(0, -34, 0, 38);
+          g.addColorStop(0, '#5f6e73');
+          g.addColorStop(0.5, '#87969b');
+          g.addColorStop(1, '#7a898e');
+          c.fillStyle = g; c.strokeStyle = L; c.lineWidth = 2.8; c.lineJoin = 'round';
+          c.beginPath();
+          c.moveTo(-74, -34);
+          c.quadraticCurveTo(-88, -32, -92, -16);
+          c.quadraticCurveTo(-92, -6, -96, -2);     // 가장자리의 물결 홈
+          c.quadraticCurveTo(-102, 16, -106, 30);
+          c.quadraticCurveTo(-106, 41, -94, 39);
+          c.quadraticCurveTo(-82, 34, -78, 16);
+          c.lineTo(-74, 6);
+          c.quadraticCurveTo(-66, -12, -60, -27);
+          c.quadraticCurveTo(-62, -37, -74, -34);
+          c.closePath();
+          c.fill(); c.stroke();
+          // 머리 밑의 작은 입
+          c.strokeStyle = L; c.lineWidth = 1.6;
+          c.beginPath(); c.moveTo(-90, 16); c.quadraticCurveTo(-83, 21, -76, 18); c.stroke();
+          // 망치 양 끝의 눈
+          drawWhaleEye(c, -70, -31, 2.6, false);
+          drawWhaleEye(c, -98, 34, 3.6, false);
+        }
+      });
+    }
+
+    // 9. 고래상어: 넓적하고 납작한 머리, 맨 앞에 있는 넓은 입, 바둑판 같은 흰 점·줄무늬, 옆구리 융기선
+    function drawIStockWhaleShark(ctx, t) {
+      drawStandardShark(ctx, t, {
+        top: [[-124, 0], [-122, -12], [-110, -20], [-86, -27], [-52, -33], [-14, -36], [24, -34], [60, -27], [92, -17], [118, -9], [140, -5]],
+        bottom: [[140, 4], [118, 9], [90, 16], [56, 25], [20, 32], [-18, 35], [-56, 33], [-88, 26], [-110, 16], [-122, 8]],
+        back: '#42596e', mid: '#2c3e4f', fin: '#304356', farFin: '#22313f', outlineColor: '#0f1922', belly: '#e8edf1',
+        gradTop: -36, gradBot: 30,
+        bellyLine: [[-126, 8], [-100, 12], [-60, 16], [-20, 18], [20, 18], [60, 14], [100, 8], [150, 4], [150, 70], [-126, 70]],
+        tail: { x: 136, y: 0, up: 70, upAng: 0.98, low: 46, lowAng: 0.9, root: 5, speed: 2.6 },
+        d1: [10, -34, 20, -56, 30, -66, 32, -48, 52, -30],
+        d2: [110, -8, 10], anal: [112, 8, 9], pelvic: [74, 19, 12],
+        gills: [-90, -84, -78, -72, -66], gillY: [-16, 14], gillColor: 'rgba(10, 18, 26, 0.8)',
+        mouth: [-124, 2, -112, 6, -98, 3], teeth: false,
+        eye: [-94, -5, 3.2],
+        pec: [-56, 18, 1.15],
+        paint(c) {
+          c.fillStyle = 'rgba(235, 242, 248, 0.85)';
+          // 세로 줄무늬
+          for (let x = -60; x <= 130; x += 20) c.fillRect(x, -40, 2.4, 50 - Math.max(0, x - 60) * 0.25);
+          // 줄 사이 점박이
+          for (let x = -50; x <= 130; x += 20) {
+            for (let y = -30, r = 0; y <= 8; y += 8, r++) {
+              c.beginPath(); c.arc(x + (r % 2 ? 3 : 0), y, 2.2, 0, Math.PI * 2); c.fill();
+            }
+          }
+          // 머리 위 촘촘한 작은 점
+          for (let x = -118; x < -64; x += 7) {
+            for (let y = -22; y < 6; y += 7) {
+              c.beginPath(); c.arc(x + ((y + 22) % 14 ? 3.5 : 0), y, 1.4, 0, Math.PI * 2); c.fill();
+            }
+          }
+          // 옆구리 융기선
+          c.strokeStyle = 'rgba(200, 220, 235, 0.6)'; c.lineWidth = 1.8;
+          c.beginPath(); c.moveTo(-60, -20); c.quadraticCurveTo(30, -26, 130, -6); c.stroke();
+          c.beginPath(); c.moveTo(-50, -2); c.quadraticCurveTo(40, -6, 134, 0); c.stroke();
+        }
+      });
+    }
+
+    // 10. 뱀상어: 짧고 각진 주둥이, 등의 세로 줄무늬, 긴 위쪽 꼬리
+    function drawIStockTigerShark(ctx, t) {
+      drawStandardShark(ctx, t, {
+        top: [[-112, 6], [-112, -4], [-104, -12], [-84, -19], [-56, -25], [-24, -27], [8, -25], [40, -20], [70, -12], [98, -6], [122, -3]],
+        bottom: [[122, 3], [100, 6], [74, 11], [44, 18], [12, 23], [-20, 25], [-52, 23], [-80, 18], [-100, 12], [-110, 9]],
+        back: '#7d7662', mid: '#625c4b', fin: '#605a4a', farFin: '#4a4538', outlineColor: '#24221a', belly: '#f1eee5',
+        bellyLine: [[-116, 8], [-90, 6], [-60, 8], [-30, 6], [0, 9], [30, 6], [60, 6], [90, 4], [130, 2], [130, 60], [-116, 60]],
+        tail: { x: 118, y: 0, up: 74, upAng: 0.6, low: 30, lowAng: 1.0, root: 4 },
+        d1: [-16, -26, -8, -50, 6, -60, 6, -40, 24, -23],
+        d2: [94, -5, 9], anal: [92, 5, 9], pelvic: [46, 16, 11],
+        gills: [-72, -66, -60, -54, -48], gillY: [-10, 9],
+        mouth: [-108, 10, -94, 17, -80, 15], teeth: true,
+        eye: [-92, -6, 4],
+        pec: [-40, 12, 0.95],
+        paint(c) {
+          // 호랑이 같은 세로 줄무늬 (어릴수록 진해요)
+          c.fillStyle = 'rgba(40, 36, 26, 0.5)';
+          for (let i = 0; i < 11; i++) {
+            const x = -44 + i * 15;
+            c.beginPath();
+            c.moveTo(x, -30);
+            c.quadraticCurveTo(x - 4, -14, x - 1, 2 + (i % 2) * 3);
+            c.lineTo(x + 4, 0);
+            c.quadraticCurveTo(x + 1, -14, x + 6, -30);
+            c.closePath(); c.fill();
+          }
+        }
+      });
+    }
+
+    // 환도상어: 몸길이만큼 긴 낫 모양 위쪽 꼬리, 큰 눈, 작은 입
+    function drawIStockThresher(ctx, t) {
+      const L = '#211c33';
+      drawStandardShark(ctx, t, {
+        top: [[-100, 4], [-97, -4], [-86, -13], [-66, -21], [-40, -26], [-10, -27], [20, -24], [46, -16], [64, -9], [78, -4]],
+        bottom: [[78, 3], [64, 6], [44, 12], [18, 20], [-12, 24], [-42, 23], [-66, 18], [-84, 12], [-96, 8]],
+        back: '#6f6594', mid: '#564d78', fin: '#5a5180', farFin: '#433c62', outlineColor: L, belly: '#f3f2f8',
+        bellyLine: [[-104, 6], [-80, 5], [-50, 8], [-20, 6], [10, 8], [40, 6], [90, 3], [90, 60], [-104, 60]],
+        tailFn(c, tt) {
+          const w = Math.sin(tt * 2.6) * 6;
+          c.save();
+          c.translate(74, 0);
+          c.beginPath();
+          c.moveTo(-8, -4);
+          c.bezierCurveTo(40, -12, 100, -30 + w * 0.5, 150, -62 + w);
+          c.bezierCurveTo(104, -26 + w * 0.5, 50, -8, 18, 2);
+          c.quadraticCurveTo(26, 10, 28, 18);
+          c.quadraticCurveTo(12, 10, -8, 4);
+          c.closePath();
+          c.fillStyle = '#5a5180'; c.fill();
+          c.strokeStyle = L; c.lineWidth = 2.6; c.lineJoin = 'round'; c.stroke();
+          c.restore();
+        },
+        d1: [-24, -25, -16, -50, -4, -62, -2, -40, 14, -22],
+        d2: [64, -6, 6], anal: [64, 5, 6], pelvic: [26, 18, 9],
+        gills: [-60, -55, -50, -45, -40], gillY: [-10, 8],
+        mouth: [-92, 9, -84, 13, -76, 12], teeth: false,
+        eye: [-78, -7, 5.8],
+        pec: [-34, 13, 1.05]
+      });
+    }
+
+    // 흑기흉상어: 날씬한 몸, 둥근 주둥이, 모든 지느러미 끝이 검은색, 옆구리의 흰 띠
+    function drawIStockBlacktip(ctx, t) {
+      drawStandardShark(ctx, t, {
+        top: [[-104, 5], [-103, -3], [-94, -11], [-76, -18], [-50, -23], [-20, -25], [12, -23], [42, -18], [70, -11], [96, -5], [118, -3]],
+        bottom: [[118, 3], [98, 6], [72, 11], [44, 17], [12, 21], [-20, 22], [-50, 20], [-76, 16], [-94, 11], [-102, 8]],
+        back: '#a59983', mid: '#877c68', fin: '#8b806c', farFin: '#6f6553', outlineColor: '#2c271e', belly: '#fbfaf6',
+        bellyLine: [[-108, 7], [-80, 6], [-50, 8], [-20, 7], [10, 9], [40, 7], [70, 6], [100, 4], [130, 2], [130, 60], [-108, 60]],
+        tail: { x: 114, y: 0, up: 60, upAng: 0.75, low: 32, lowAng: 1.0, root: 4 },
+        d1: [-16, -24, -8, -48, 6, -60, 8, -38, 24, -22],
+        d2: [92, -4, 8], anal: [90, 5, 8], pelvic: [46, 15, 10],
+        gills: [-66, -61, -56, -51, -46], gillY: [-10, 8],
+        mouth: [-100, 9, -90, 14, -80, 13], teeth: false,
+        eye: [-86, -5, 4],
+        pec: [-38, 11, 0.9],
+        tipColor: '#14110d',
+        paint(c) {
+          // 옆구리의 흰 띠
+          c.fillStyle = '#fbfaf6';
+          smoothClosedPath(c, [[20, 9], [44, 2], [72, 1], [66, 9], [40, 13]]);
+          c.fill();
+        }
+      });
+    }
+
+    // 11. 대왕쥐가오리 (위에서 본 모습: 뾰족한 삼각형 날개, 머리 앞 두각, 네모난 입, 어깨의 흰 무늬, 독가시 없는 짧은 꼬리)
+    function drawIStockMantaRay(ctx, t) {
+      const beat = Math.cos(t * 1.9);
+      const span = 122 * (0.86 + 0.14 * beat);   // 날갯짓을 하면 위에서 보이는 날개 폭이 변해요
+      const tipX = 16 - beat * 6;
+      const line = '#05090e';
+
+      const disc = c => {
+        c.beginPath();
+        c.moveTo(-62, -24);
+        c.bezierCurveTo(-42, -48, -6, -span * 0.74, tipX, -span);
+        c.bezierCurveTo(24, -span * 0.6, 40, -36, 64, -12);
+        c.quadraticCurveTo(74, -5, 76, 0);
+        c.quadraticCurveTo(74, 5, 64, 12);
+        c.bezierCurveTo(40, 36, 24, span * 0.6, tipX, span);
+        c.bezierCurveTo(-6, span * 0.74, -42, 48, -62, 24);
+        c.quadraticCurveTo(-68, 18, -67, 0);
+        c.quadraticCurveTo(-68, -18, -62, -24);
+        c.closePath();
+      };
+
+      // 꼬리 (만타는 독가시가 없고 몸보다 짧아요)
+      const whip = Math.sin(t * 2.2) * 7;
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 5;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(72, 0); ctx.quadraticCurveTo(108, whip, 146, -whip * 0.6); ctx.stroke();
+      ctx.strokeStyle = '#2c3a47';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(72, 0); ctx.quadraticCurveTo(108, whip, 146, -whip * 0.6); ctx.stroke();
+      ctx.lineCap = 'butt';
+
+      // 머리 앞의 두각 (먹이를 입으로 몰아주는 지느러미)
+      const curl = Math.sin(t * 1.4) * 2;
+      [-1, 1].forEach(s => {
+        ctx.fillStyle = '#1b2631';
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 2.4;
+        ctx.lineJoin = 'round';
         ctx.beginPath();
-        ctx.ellipse(bx, 0, bw, bh, 0, 0, Math.PI * 2);
+        ctx.moveTo(-60, s * 26);
+        ctx.bezierCurveTo(-76, s * 32, -100, s * 28, -106, s * (13 + curl));
+        ctx.bezierCurveTo(-96, s * 18, -80, s * 16, -64, s * 14);
+        ctx.closePath();
         ctx.fill(); ctx.stroke();
       });
 
-      drawWhaleEye(ctx, -26, -6, 5.5, false);
-    }
-
-    // 15. 쏠배감펭
-    function drawIStockLionfish(ctx, t) {
-      for (let s = 0; s < 7; s++) {
-        const ang = -0.9 + s * 0.28 + Math.sin(t * 2.5 + s) * 0.12;
-        const len = 48 + (s % 3) * 12;
-        ctx.strokeStyle = (s % 2 === 0) ? '#ef4444' : '#ffffff';
-        ctx.lineWidth = 3.6;
-        ctx.beginPath();
-        ctx.moveTo(-10, 0); ctx.lineTo(-10 + Math.cos(ang) * len, Math.sin(ang) * len);
-        ctx.stroke();
-      }
-      drawIStockClownfish(ctx, t);
-    }
-
-    // 16. 해마
-    function drawIStockSeahorse(ctx, t) {
-      const grad = ctx.createLinearGradient(0, -40, 0, 35);
-      grad.addColorStop(0, '#fde047');
-      grad.addColorStop(0.5, '#f59e0b');
-      grad.addColorStop(1, '#b45309');
-
+      // 몸통과 날개
+      const grad = ctx.createLinearGradient(-60, 0, 76, 0);
+      grad.addColorStop(0, '#2e3c49');
+      grad.addColorStop(0.55, '#223039');
+      grad.addColorStop(1, '#17212a');
+      disc(ctx);
       ctx.fillStyle = grad;
-      ctx.strokeStyle = '#78350f';
-      ctx.lineWidth = 3.0;
-
-      ctx.beginPath();
-      ctx.moveTo(-8, -38); ctx.lineTo(8, -42); ctx.lineTo(12, -34);
-      ctx.quadraticCurveTo(6, -22, 12, -8);
-      ctx.lineTo(18, 16); ctx.lineTo(6, 28);
-      ctx.quadraticCurveTo(-28, 32, -28, 0); // 불룩 나온 뚱뚱한 배
-      ctx.quadraticCurveTo(-20, -16, -6, -22);
-      ctx.lineTo(-24, -25); ctx.lineTo(-24, -30); ctx.lineTo(-14, -30);
-      ctx.closePath();
       ctx.fill();
-      ctx.stroke();
 
-      ctx.strokeStyle = '#b45309';
-      ctx.lineWidth = 4.6;
-      ctx.beginPath();
-      ctx.moveTo(6, 28);
-      ctx.quadraticCurveTo(12, 45, -2, 52);
-      ctx.quadraticCurveTo(-20, 54, -20, 42);
-      ctx.quadraticCurveTo(-14, 36, -2, 38);
-      ctx.stroke();
-
-      drawWhaleEye(ctx, -8, -26, 4.5, false);
-    }
-
-    // 17. 대왕문어
-    function drawIStockGiantOctopus(ctx, t) {
-      for (let a = 0; a < 8; a++) {
-        const offset = a * 0.75;
-        const wave = Math.sin(t * 3.0 + offset) * 18;
-        const ySpread = -26 + a * 7.4;
-
-        ctx.strokeStyle = '#dc2626';
-        ctx.lineWidth = 5.6;
+      ctx.save();
+      disc(ctx);
+      ctx.clip();
+      // 어깨의 흰 무늬 (만타마다 달라서 지문처럼 쓰여요)
+      ctx.fillStyle = '#eef3f6';
+      [-1, 1].forEach(s => {
         ctx.beginPath();
-        ctx.moveTo(-10, ySpread * 0.4);
-        ctx.quadraticCurveTo(28, ySpread + wave, 72, ySpread * 1.2 - wave * 0.5);
-        ctx.stroke();
-      }
+        ctx.moveTo(-34, s * 15);
+        ctx.quadraticCurveTo(-20, s * 42, -4, s * 62);
+        ctx.quadraticCurveTo(0, s * 36, 10, s * 15);
+        ctx.quadraticCurveTo(-12, s * 22, -34, s * 15);
+        ctx.closePath();
+        ctx.fill();
+      });
+      // 등 가운데 솟은 부분
+      const ridge = ctx.createLinearGradient(0, -24, 0, 24);
+      ridge.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      ridge.addColorStop(0.5, 'rgba(255, 255, 255, 0.14)');
+      ridge.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = ridge;
+      ctx.fillRect(-60, -24, 136, 48);
+      // 날개 뒤쪽의 옅은 근육결
+      ctx.strokeStyle = 'rgba(190, 210, 225, 0.16)';
+      ctx.lineWidth = 1.5;
+      [-1, 1].forEach(s => {
+        [0.45, 0.62, 0.8].forEach(k => {
+          ctx.beginPath();
+          ctx.moveTo(14, s * 16);
+          ctx.quadraticCurveTo(26, s * span * k * 0.6, tipX + 6, s * span * k);
+          ctx.stroke();
+        });
+      });
+      ctx.restore();
 
-      const mantle = ctx.createRadialGradient(-40, 0, 8, -36, 0, 40);
-      mantle.addColorStop(0, '#f87171');
-      mantle.addColorStop(0.5, '#dc2626');
-      mantle.addColorStop(1, '#7f1d1d');
-
-      ctx.fillStyle = mantle;
-      ctx.strokeStyle = '#450a0a';
-      ctx.lineWidth = 3.2;
-
-      ctx.beginPath();
-      ctx.ellipse(-36, 0, 36, 30, 0, 0, Math.PI * 2);
-      ctx.fill();
+      disc(ctx);
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round';
       ctx.stroke();
 
-      drawWhaleEye(ctx, -20, -10, 5.5, false);
+      // 머리 맨 앞의 넓은 입
+      ctx.strokeStyle = '#05090e';
+      ctx.lineWidth = 3.4;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-66, -14); ctx.quadraticCurveTo(-70, 0, -66, 14); ctx.stroke();
+      ctx.lineCap = 'butt';
+
+      // 머리 양옆의 눈
+      ringEye(ctx, -56, -21, 3.2);
+      ringEye(ctx, -56, 21, 3.2);
     }
 
-    // 18. 보름달물해파리
-    function drawIStockMoonJelly(ctx, t) {
-      const pulse = Math.abs(Math.sin(t * 2.4));
-      const bw = 38 + pulse * 8;
-      const bh = 32 - pulse * 6;
+    // 12. 매부리바다거북 (옆모습: 둥근 등딱지, 톱니 같은 뒤쪽 가장자리, 매처럼 굽은 부리, 긴 앞지느러미)
+    function drawIStockSeaTurtle(ctx, t) {
+      const stroke = Math.sin(t * 1.7) * 0.28;
+      const line = '#3a2109';
 
-      const jelly = ctx.createRadialGradient(0, -10, 6, 0, 0, bw);
-      jelly.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-      jelly.addColorStop(0.5, 'rgba(232, 121, 249, 0.7)');
-      jelly.addColorStop(1, 'rgba(168, 85, 247, 0.9)');
+      const shellPath = c => {
+        c.beginPath();
+        c.moveTo(-60, 8);
+        c.bezierCurveTo(-52, -32, -10, -48, 20, -39);
+        c.bezierCurveTo(46, -31, 64, -8, 72, 11);
+        // 뒤쪽이 톱니처럼 들쭉날쭉한 가장자리
+        c.lineTo(62, 9); c.lineTo(58, 16); c.lineTo(47, 11); c.lineTo(42, 18);
+        c.lineTo(30, 12); c.lineTo(24, 19); c.lineTo(10, 13);
+        c.quadraticCurveTo(-25, 18, -60, 8);
+        c.closePath();
+      };
 
-      ctx.fillStyle = jelly;
-      ctx.strokeStyle = '#f5d0fe';
-      ctx.lineWidth = 2.6;
+      // 반대편 앞지느러미와 뒷지느러미
+      leafFin(ctx, -36, 10, 66, 18, 0.55 - stroke, '#4f3216', line, 2.2, { curl: 6 });
+      leafFin(ctx, 48, 8, 26, 12, 0.2 + stroke * 0.4, '#4f3216', line, 2);
 
+      // 배딱지
+      ctx.fillStyle = '#f0d68c';
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.ellipse(0, 0, bw, bh, 0, Math.PI, 0);
-      ctx.quadraticCurveTo(0, 12, -bw, 0);
+      ctx.moveTo(-54, 8);
+      ctx.quadraticCurveTo(0, 36, 60, 10);
       ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      // 목과 머리
+      const headPts = [[-48, -8], [-66, -12], [-80, -18], [-96, -15], [-104, -6], [-102, 4], [-92, 7], [-74, 11], [-48, 16]];
+      smoothClosedPath(ctx, headPts);
+      ctx.fillStyle = '#a8701f';
       ctx.fill();
+      ctx.save();
+      smoothClosedPath(ctx, headPts);
+      ctx.clip();
+      // 턱과 목의 밝은 부분
+      ctx.fillStyle = '#efd28a';
+      ctx.beginPath(); ctx.ellipse(-76, 13, 34, 9, 0.08, 0, Math.PI * 2); ctx.fill();
+      // 머리의 비늘
+      ctx.fillStyle = '#5b3612';
+      ctx.strokeStyle = '#e9c777';
+      ctx.lineWidth = 1;
+      [[-97, -11, 5, 3.5], [-87, -14, 5.5, 3.5], [-77, -13, 5, 3.5], [-68, -9, 5, 3.5], [-80, -5, 4, 2.6]].forEach(([x, y, rx, ry]) => {
+        ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0.15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      });
+      ctx.restore();
+      smoothClosedPath(ctx, headPts);
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 2.6;
+      ctx.lineJoin = 'round';
       ctx.stroke();
 
-      ctx.fillStyle = '#c026d3';
-      [[-12, -12], [12, -12], [-12, -4], [12, -4]].forEach(([gx, gy]) => {
-        ctx.beginPath(); ctx.arc(gx, gy, 6, 0, Math.PI * 2); ctx.fill();
+      // 매처럼 아래로 굽은 윗부리
+      ctx.fillStyle = '#e6c777';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-98, -11);
+      ctx.quadraticCurveTo(-114, -8, -111, 7);
+      ctx.quadraticCurveTo(-104, 1, -95, 1);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(-95, 1); ctx.quadraticCurveTo(-88, 3, -82, 1); ctx.stroke();
+      drawWhaleEye(ctx, -88, -7, 3.8, false);
+
+      // 등딱지
+      const shell = ctx.createLinearGradient(0, -46, 0, 18);
+      shell.addColorStop(0, '#b9782a');
+      shell.addColorStop(0.6, '#8f5519');
+      shell.addColorStop(1, '#6b3d10');
+      shellPath(ctx);
+      ctx.fillStyle = shell;
+      ctx.fill();
+
+      ctx.save();
+      shellPath(ctx);
+      ctx.clip();
+      // 대모갑 특유의 호박색·흑갈색 얼룩
+      [[-40, -14, 11, 5, -0.7], [-28, -28, 9, 4, -0.5], [-14, 0, 10, 4, 0.2], [-4, -22, 12, 5, -0.2], [12, -36, 9, 3.5, 0.1], [18, -6, 11, 4, 0.4], [34, -24, 10, 4, 0.5], [46, -4, 9, 3.5, 0.7]].forEach(([x, y, rx, ry, a], i) => {
+        ctx.fillStyle = i % 2 ? 'rgba(248, 205, 115, 0.72)' : 'rgba(45, 24, 8, 0.72)';
+        ctx.beginPath(); ctx.ellipse(x, y, rx, ry, a, 0, Math.PI * 2); ctx.fill();
+      });
+      // 비늘판 경계선
+      ctx.strokeStyle = 'rgba(45, 24, 8, 0.9)';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-54, -14); ctx.lineTo(-38, -29); ctx.lineTo(-24, -26); ctx.lineTo(-8, -38);
+      ctx.lineTo(10, -33); ctx.lineTo(26, -40); ctx.lineTo(40, -22); ctx.lineTo(62, -14);
+      ctx.stroke();
+      [[-38, -29, -32, 5], [-8, -38, -2, 7], [26, -33, 28, 8]].forEach(([x1, y1, x2, y2]) => {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      });
+      // 가장자리 비늘판
+      ctx.beginPath(); ctx.moveTo(-60, 3); ctx.quadraticCurveTo(0, 12, 70, 6); ctx.stroke();
+      ctx.lineWidth = 1.5;
+      for (let x = -46; x < 66; x += 15) {
+        ctx.beginPath(); ctx.moveTo(x, 4); ctx.lineTo(x - 2, 20); ctx.stroke();
+      }
+      ctx.restore();
+
+      shellPath(ctx);
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      // 앞쪽 뒷지느러미와 긴 앞지느러미
+      leafFin(ctx, 44, 11, 32, 14, 0.42 - stroke * 0.4, '#8b5820', line, 2.2);
+      leafFin(ctx, -40, 12, 84, 22, 0.98 + stroke, '#8b5820', line, 2.6, { curl: 8 });
+      ctx.save();
+      ctx.translate(-40, 12);
+      ctx.rotate(0.98 + stroke);
+      ctx.fillStyle = 'rgba(240, 210, 140, 0.75)';
+      [[16, -3], [30, 2], [42, -3], [56, 3], [68, 5]].forEach(([x, y], i) => {
+        ctx.beginPath(); ctx.ellipse(x, y, 5 - i * 0.5, 2.8 - i * 0.25, 0.2, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    // 굵기가 변하는 관 모양 그리기 (문어 다리, 해마 꼬리)
+    function drawTube(ctx, pts, fill, stroke) {
+      ctx.fillStyle = stroke;
+      pts.forEach(([x, y, w]) => { ctx.beginPath(); ctx.arc(x, y, w / 2 + 1.5, 0, Math.PI * 2); ctx.fill(); });
+      ctx.fillStyle = fill;
+      pts.forEach(([x, y, w]) => { ctx.beginPath(); ctx.arc(x, y, w / 2, 0, Math.PI * 2); ctx.fill(); });
+    }
+
+    // 13. 듀공: 통통한 몸, 아래로 굽은 넓적한 주둥이, 고래처럼 수평인 꼬리, 등지느러미 없음
+    function drawIStockDugong(ctx, t) {
+      const flap = Math.sin(t * 1.8) * 0.08;
+      const line = '#3f3a30';
+      drawWhaleBase(ctx, t, {
+        top: [[-86, 14], [-88, 2], [-80, -10], [-66, -20], [-42, -30], [-10, -34], [24, -30], [54, -20], [78, -10], [94, -5]],
+        bottom: [[94, 3], [78, 9], [54, 20], [24, 30], [-10, 34], [-42, 32], [-64, 26], [-76, 26], [-84, 24]],
+        fluke: [90, -1, 46],
+        back: '#8c8679', mid: '#bdb7a8', outlineColor: line, gradTop: -34, gradBot: 30, lw: 2.8, beatSpeed: 2.2,
+        behind(c) { leafFin(c, -40, 16, 26, 11, 0.45 - flap, '#79736a', line, 2); },
+        paint(c) {
+          // 몸의 짧은 털과 흉터
+          c.fillStyle = 'rgba(70, 64, 52, 0.4)';
+          for (let i = 0; i < 40; i++) {
+            c.beginPath(); c.arc(-70 + (i * 37) % 155, -30 + (i * 19) % 58, 0.9, 0, Math.PI * 2); c.fill();
+          }
+          c.strokeStyle = 'rgba(245, 240, 228, 0.5)'; c.lineWidth = 1.6;
+          [[-24, -14, 14], [18, -6, 18], [44, -12, 10]].forEach(([x, y, l]) => {
+            c.beginPath(); c.moveTo(x, y); c.lineTo(x + l, y + 4); c.stroke();
+          });
+        },
+        front(c) {
+          // 바다풀을 뜯는 넓적한 주둥이
+          c.fillStyle = '#a7a193'; c.strokeStyle = line; c.lineWidth = 2.6;
+          c.beginPath(); c.ellipse(-82, 16, 12, 14, 0.25, 0, Math.PI * 2); c.fill(); c.stroke();
+          c.fillStyle = '#4a4438';
+          [[-86, 10], [-80, 14], [-87, 18], [-81, 21], [-76, 18]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 1.2, 0, Math.PI * 2); c.fill(); });
+          c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-92, 26); c.quadraticCurveTo(-82, 32, -71, 27); c.stroke();
+          // 콧구멍은 주둥이 위쪽에 있어요
+          c.beginPath(); c.moveTo(-88, 1); c.lineTo(-83, -2); c.stroke();
+          drawWhaleEye(c, -64, -7, 3.2, false);
+          leafFin(c, -46, 18, 36, 15, 0.85 + flap, '#857f72', line, 2.3);
+        }
       });
     }
 
-    // 19. 나폴레옹피쉬
-    function drawIStockHumpheadWrasse(ctx, t) {
-      drawIStockClownfish(ctx, t);
-      ctx.fillStyle = '#0d9488';
-      ctx.strokeStyle = '#042f2e';
-      ctx.lineWidth = 2.8;
+    // 14. 흰동가리: 주황색 몸, 검은 테두리의 흰 띠 3줄, 둥근 지느러미
+    function drawIStockClownfish(ctx, t) {
+      const line = '#241003', orange = '#f97316';
+      const flap = Math.sin(t * 6) * 0.3;
+      const roundFin = (c, build) => bodyFin(c, build, orange, line, 2.4);
+      drawFishBase(ctx, t, {
+        top: [[-48, 2], [-44, -12], [-30, -24], [-8, -30], [14, -27], [30, -16], [40, -6]],
+        bottom: [[40, 6], [30, 16], [14, 27], [-8, 30], [-30, 24], [-44, 14]],
+        back: '#fb8a24', mid: '#ea5a0c', gradTop: -30, gradBot: 30, line,
+        tail: { x: 38, y: 0, len: 24, up: 19, low: 19, fork: 0, root: 6, fill: orange, speed: 7 },
+        paint(c) {
+          [[-25, 6, -7], [4, 8, 7], [33, 4, 5]].forEach(([x, w, bow]) => {
+            c.beginPath();
+            c.moveTo(x - w, -40);
+            c.quadraticCurveTo(x - w + bow, 0, x - w, 40);
+            c.lineTo(x + w, 40);
+            c.quadraticCurveTo(x + w + bow, 0, x + w, -40);
+            c.closePath();
+            c.fillStyle = '#ffffff'; c.fill();
+            c.strokeStyle = '#111111'; c.lineWidth = 2.6; c.stroke();
+          });
+        },
+        front(c) {
+          roundFin(c, f => { f.moveTo(-18, -27); f.quadraticCurveTo(-12, -44, 2, -40); f.quadraticCurveTo(12, -46, 20, -36); f.quadraticCurveTo(30, -32, 32, -14); });
+          roundFin(c, f => { f.moveTo(8, 27); f.quadraticCurveTo(14, 42, 26, 36); f.quadraticCurveTo(32, 26, 30, 15); });
+          roundFin(c, f => { f.moveTo(-22, 26); f.quadraticCurveTo(-22, 42, -10, 40); f.quadraticCurveTo(-4, 34, -4, 28); });
+          c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-48, 4); c.quadraticCurveTo(-44, 9, -38, 7); c.stroke();
+          ringEye(c, -35, -8, 5);
+          leafFin(c, -14, 6, 22, 16, 0.35 + flap, orange, line, 2.2);
+        }
+      });
+    }
+
+    // 15. 쏠배감펭: 붉은 줄무늬 몸, 길게 솟은 등가시, 부채처럼 펼친 가슴지느러미
+    function drawIStockLionfish(ctx, t) {
+      const line = '#3a120c';
+      const fan = (c, ox, oy, from, to, len, count) => {
+        const tips = [];
+        for (let i = 0; i <= count; i++) {
+          const a = from + (to - from) * (i / count) + Math.sin(t * 2.5 + i) * 0.05;
+          const l = len * (0.8 + 0.2 * Math.sin((i / count) * Math.PI));
+          tips.push([ox + Math.cos(a) * l, oy + Math.sin(a) * l]);
+        }
+        c.beginPath(); c.moveTo(ox, oy); tips.forEach(p => c.lineTo(p[0], p[1])); c.closePath();
+        c.fillStyle = 'rgba(245, 224, 205, 0.55)'; c.fill();
+        c.lineCap = 'round'; c.lineWidth = 3;
+        tips.forEach(p => {
+          c.strokeStyle = '#a32a1c'; c.setLineDash([]);
+          c.beginPath(); c.moveTo(ox, oy); c.lineTo(p[0], p[1]); c.stroke();
+          c.strokeStyle = '#fff4e6'; c.setLineDash([7, 9]);
+          c.beginPath(); c.moveTo(ox, oy); c.lineTo(p[0], p[1]); c.stroke();
+        });
+        c.setLineDash([]); c.lineCap = 'butt';
+      };
+
+      drawFishBase(ctx, t, {
+        behind(c) {
+          fan(c, -10, 2, -1.0, 0.3, 74, 6);
+          // 독이 있는 긴 등가시
+          for (let i = 0; i < 10; i++) {
+            const x = -30 + i * 6.2;
+            const h = 62 - i * 3 + Math.sin(t * 2 + i) * 2;
+            c.fillStyle = 'rgba(245, 224, 205, 0.6)';
+            c.beginPath(); c.moveTo(x, -18); c.lineTo(x + 4, -18 - h); c.lineTo(x + 8, -18); c.closePath(); c.fill();
+            c.lineCap = 'round'; c.lineWidth = 2.6;
+            c.strokeStyle = '#a32a1c'; c.beginPath(); c.moveTo(x + 2, -16); c.lineTo(x + 4, -18 - h); c.stroke();
+            c.strokeStyle = '#fff4e6'; c.setLineDash([6, 8]); c.beginPath(); c.moveTo(x + 2, -16); c.lineTo(x + 4, -18 - h); c.stroke();
+            c.setLineDash([]); c.lineCap = 'butt';
+          }
+        },
+        top: [[-50, 6], [-46, -8], [-32, -20], [-8, -26], [16, -22], [32, -12], [44, -5]],
+        bottom: [[44, 5], [32, 12], [16, 20], [-8, 26], [-32, 22], [-46, 14]],
+        back: '#b4432f', mid: '#f0d6bf', gradTop: -26, gradBot: 26, line,
+        tail: { x: 42, y: 0, len: 28, up: 20, low: 20, fork: 0, root: 5, fill: '#efd8c3', speed: 5 },
+        paint(c) {
+          c.fillStyle = 'rgba(120, 28, 18, 0.88)';
+          for (let x = -44; x < 46; x += 11) {
+            c.beginPath();
+            c.moveTo(x, -30); c.quadraticCurveTo(x + 6, 0, x, 30);
+            c.lineTo(x + 5, 30); c.quadraticCurveTo(x + 11, 0, x + 5, -30);
+            c.closePath(); c.fill();
+          }
+        },
+        front(c) {
+          c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-50, 7); c.quadraticCurveTo(-44, 12, -36, 9); c.stroke();
+          // 눈 위 작은 돌기
+          c.lineWidth = 2.2;
+          c.beginPath(); c.moveTo(-36, -13); c.quadraticCurveTo(-40, -24, -32, -30); c.stroke();
+          ringEye(c, -34, -7, 4.6);
+          fan(c, -12, 8, 0.25, 1.75, 84, 7);
+        }
+      });
+    }
+
+    // 16. 해마: 곧게 선 몸, 대롱 주둥이, 왕관 돌기, 볼록한 배, 돌돌 말린 꼬리
+    function drawIStockSeahorse(ctx, t) {
+      const line = '#6b3a08';
+      const sway = Math.sin(t * 1.5) * 2;
+      ctx.save();
+      ctx.translate(sway * 0.5, -8);
+
+      // 돌돌 말린 꼬리
+      const tail = [];
+      for (let i = 0; i <= 18; i++) { const s = i / 18; tail.push([8 + s * 7, 34 + s * 24, 20 - s * 6]); }
+      for (let i = 0; i <= 44; i++) {
+        const s = i / 44;
+        const a = -0.2 + s * 5.4;
+        const r = 21 * (1 - s) + 4;
+        tail.push([-6 + Math.cos(a) * r, 62 + Math.sin(a) * r, 14 * (1 - s) + 3]);
+      }
+      drawTube(ctx, tail, '#e8a01f', line);
+      ctx.strokeStyle = 'rgba(107, 58, 8, 0.65)'; ctx.lineWidth = 1.4;
+      tail.forEach(([x, y, w], i) => {
+        if (i % 6 === 0 && i < 56) { ctx.beginPath(); ctx.arc(x, y, w / 2, 0, Math.PI * 2); ctx.stroke(); }
+      });
+
+      // 가슴지느러미
+      leafFin(ctx, 8, -38, 18, 13, -0.5 + Math.sin(t * 8) * 0.25, 'rgba(255, 226, 150, 0.85)', line, 1.6);
+
+      const outline = [[-54, -50], [-32, -55], [-14, -63], [6, -62], [16, -50], [14, -36], [24, -22], [31, -4], [30, 16], [22, 30], [14, 42], [0, 42], [-16, 34], [-32, 18], [-36, -2], [-26, -18], [-12, -29], [-9, -36], [-24, -41], [-54, -43]];
+      smoothClosedPath(ctx, outline);
+      const g = ctx.createLinearGradient(-36, 0, 32, 0);
+      g.addColorStop(0, '#ffe08a');
+      g.addColorStop(0.55, '#f5b32f');
+      g.addColorStop(1, '#d9850f');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.save();
+      smoothClosedPath(ctx, outline); ctx.clip();
+      // 몸을 두른 마디
+      ctx.strokeStyle = 'rgba(107, 58, 8, 0.6)'; ctx.lineWidth = 1.6;
+      for (let y = -28; y < 44; y += 8) {
+        ctx.beginPath(); ctx.moveTo(-40, y - 6); ctx.quadraticCurveTo(0, y + 7, 36, y - 3); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(145, 80, 12, 0.6)';
+      [[-20, -8], [-12, 8], [4, -14], [14, 4], [-4, 22], [10, 24], [-2, -48], [8, -54]].forEach(([x, y]) => {
+        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.restore();
+      smoothClosedPath(ctx, outline);
+      ctx.strokeStyle = line; ctx.lineWidth = 2.8; ctx.lineJoin = 'round'; ctx.stroke();
+
+      // 왕관 돌기
+      ctx.fillStyle = '#f5b32f'; ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(-30, -26, 13, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      ctx.moveTo(-14, -61); ctx.lineTo(-12, -75); ctx.lineTo(-5, -66); ctx.lineTo(-1, -79); ctx.lineTo(4, -66); ctx.lineTo(11, -74); ctx.lineTo(10, -59);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      // 등의 작은 지느러미 (아주 빠르게 팔랑거려요)
+      const flut = Math.sin(t * 14) * 3;
+      ctx.fillStyle = 'rgba(255, 234, 170, 0.9)'; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(29, -14); ctx.quadraticCurveTo(50 + flut, -10, 48 + flut, 6); ctx.quadraticCurveTo(40, 14, 30, 16); ctx.fill(); ctx.stroke();
+
+      ctx.strokeStyle = line; ctx.lineWidth = 1.8;
+      ctx.beginPath(); ctx.moveTo(-54, -46); ctx.lineTo(-48, -46); ctx.stroke();
+      ringEye(ctx, -14, -48, 4.4);
+      ctx.restore();
+    }
+
+    // 17. 대왕문어: 커다란 머리(외투막), 빨판이 달린 다리 8개, 가로로 긴 눈동자
+    function drawIStockGiantOctopus(ctx, t) {
+      const line = '#3f120a';
+      const arm = (a, far) => {
+        const spread = -46 + a * 13;
+        const pts = [], suckers = [];
+        const n = 46;
+        for (let i = 0; i <= n; i++) {
+          const s = i / n;
+          const x = -10 + s * (132 + (a % 3) * 10);
+          const wave = Math.sin(s * 5 + t * 2.4 + a * 0.9) * 15 * s;
+          const curl = (a % 2 ? -1 : 1) * Math.pow(s, 4) * 26;
+          const y = spread * (0.35 + s * 0.8) + wave + curl;
+          const w = 18 * (1 - s) + 3;
+          pts.push([x, y, w]);
+          if (i % 3 === 1 && s < 0.9) suckers.push([x, y + w * 0.3, w * 0.24]);
+        }
+        drawTube(ctx, pts, far ? '#8f3423' : '#c4553c', line);
+        ctx.fillStyle = far ? '#c98d7c' : '#f6c9ba';
+        suckers.forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); });
+      };
+      [1, 3, 5, 7].forEach(a => arm(a, true));
+
+      // 다리 사이의 물갈퀴
+      ctx.fillStyle = '#a84431';
+      ctx.beginPath(); ctx.moveTo(-14, -28); ctx.quadraticCurveTo(38, -8, 34, 0); ctx.quadraticCurveTo(38, 10, -14, 30); ctx.closePath(); ctx.fill();
+
+      [0, 2, 4, 6].forEach(a => arm(a, false));
+
+      // 물을 뿜는 관
+      ctx.fillStyle = '#b44a35'; ctx.strokeStyle = line; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.ellipse(-8, 24, 11, 6, 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+      // 외투막 (사람들이 머리라고 부르는 부분)
+      const outline = [[-104, -6], [-96, -30], [-70, -44], [-40, -44], [-18, -34], [-4, -18], [2, 0], [-4, 18], [-20, 30], [-44, 36], [-72, 32], [-96, 16]];
+      smoothClosedPath(ctx, outline);
+      const g = ctx.createRadialGradient(-62, -22, 8, -50, -4, 66);
+      g.addColorStop(0, '#e98a6f');
+      g.addColorStop(0.55, '#c4553c');
+      g.addColorStop(1, '#85301f');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.save();
+      smoothClosedPath(ctx, outline); ctx.clip();
+      ctx.fillStyle = 'rgba(95, 28, 16, 0.55)';
+      for (let i = 0; i < 30; i++) {
+        ctx.beginPath(); ctx.ellipse(-100 + (i * 41) % 100, -42 + (i * 23) % 76, 2.5 + (i % 3), 1.8 + (i % 2), i, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255, 215, 195, 0.28)';
+      ctx.beginPath(); ctx.ellipse(-68, -28, 22, 8, -0.25, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      smoothClosedPath(ctx, outline);
+      ctx.strokeStyle = line; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
+
+      // 가로로 긴 눈동자
+      ctx.fillStyle = '#f7d774'; ctx.strokeStyle = line; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.ellipse(-12, -14, 10, 9, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#120704';
+      ctx.beginPath(); ctx.roundRect(-20, -17, 16, 5.5, 2.5); ctx.fill();
+    }
+
+    // 18. 보름달물해파리: 투명한 갓, 네 잎 모양 생식선, 가는 가장자리 촉수, 주름진 입 팔
+    function drawIStockMoonJelly(ctx, t) {
+      const p = (Math.sin(t * 2.4) + 1) / 2;
+      const bw = 56 + p * 9, bh = 40 - p * 8;
+      ctx.save();
+      ctx.translate(0, -18);
+
+      // 가는 가장자리 촉수
+      ctx.strokeStyle = 'rgba(235, 245, 255, 0.75)'; ctx.lineWidth = 1.1;
+      for (let i = 0; i <= 34; i++) {
+        const x = -bw + (2 * bw * i) / 34;
+        const edge = 6 * (1 - Math.pow(x / bw, 2));
+        const len = 17 + (i % 3) * 5;
+        ctx.beginPath(); ctx.moveTo(x, edge); ctx.quadraticCurveTo(x + Math.sin(t * 3 + i) * 5, edge + len * 0.6, x + Math.sin(t * 3 + i + 1) * 3, edge + len); ctx.stroke();
+      }
+
+      // 주름진 입 팔 4개
+      [-16, -6, 6, 16].forEach((ox, a) => {
+        const fw = 5;
+        ctx.fillStyle = 'rgba(247, 205, 235, 0.65)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        ctx.moveTo(ox * 0.5 - fw, -2);
+        for (let i = 1; i <= 8; i++) {
+          const y = -2 + i * 10;
+          const x = ox + Math.sin(i * 0.8 + t * 2.2 + a) * 7;
+          ctx.quadraticCurveTo(x - fw - 7, y - 5, x - fw * (1 - i / 10), y);
+        }
+        for (let i = 8; i >= 1; i--) {
+          const y = -2 + i * 10;
+          const x = ox + Math.sin(i * 0.8 + t * 2.2 + a) * 7;
+          ctx.quadraticCurveTo(x + fw + 7, y + 5, x + fw * (1 - i / 10), y - 10 + 10);
+        }
+        ctx.lineTo(ox * 0.5 + fw, -2);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      });
+
+      // 투명한 갓
+      const bell = () => {
+        ctx.beginPath();
+        ctx.moveTo(-bw, 2);
+        ctx.bezierCurveTo(-bw * 0.9, -bh * 1.2, bw * 0.9, -bh * 1.2, bw, 2);
+        const n = 12;
+        for (let i = 1; i <= n; i++) {
+          const x0 = bw - (2 * bw * (i - 0.5)) / n;
+          const x1 = bw - (2 * bw * i) / n;
+          const y = 7 * (1 - Math.pow(x0 / bw, 2));
+          ctx.quadraticCurveTo(x0, y + 7, x1, 6 * (1 - Math.pow(x1 / bw, 2)) + 2);
+        }
+        ctx.closePath();
+      };
+      bell();
+      const g = ctx.createRadialGradient(0, -bh * 0.5, 4, 0, -bh * 0.3, bw * 1.05);
+      g.addColorStop(0, 'rgba(255, 255, 255, 0.72)');
+      g.addColorStop(0.6, 'rgba(214, 228, 255, 0.5)');
+      g.addColorStop(1, 'rgba(226, 200, 255, 0.72)');
+      ctx.fillStyle = g; ctx.fill();
+
+      ctx.save();
+      bell(); ctx.clip();
+      // 갓의 가는 방사선
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)'; ctx.lineWidth = 1;
+      for (let i = -8; i <= 8; i++) {
+        ctx.beginPath(); ctx.moveTo(0, -bh * 0.82); ctx.quadraticCurveTo(i * bw * 0.1, -bh * 0.5, i * bw * 0.125, 10); ctx.stroke();
+      }
+      ctx.restore();
+
+      // 네 잎 모양 생식선
+      ctx.strokeStyle = 'rgba(205, 95, 190, 0.92)'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+      [[-24, -13, 0.25], [-8, -19, 0.08], [8, -19, -0.08], [24, -13, -0.25]].forEach(([x, y, r]) => {
+        ctx.save();
+        ctx.translate(x, y); ctx.rotate(r); ctx.scale(1, 0.72);
+        ctx.beginPath(); ctx.arc(0, 0, 9, Math.PI * 0.15, Math.PI * 1.85); ctx.stroke();
+        ctx.restore();
+      });
+      ctx.lineCap = 'butt';
+
+      bell();
+      ctx.strokeStyle = 'rgba(245, 250, 255, 0.95)'; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.restore();
+    }
+
+    // 19. 나폴레옹피쉬: 이마의 커다란 혹, 두꺼운 입술, 청록색 몸의 비늘무늬, 눈 주위 무늬선
+    function drawIStockHumpheadWrasse(ctx, t) {
+      const line = '#06383a';
+      drawFishBase(ctx, t, {
+        behind(c) {
+          bodyFin(c, f => { f.moveTo(-62, -46); f.quadraticCurveTo(-20, -68, 30, -58); f.quadraticCurveTo(62, -50, 80, -16); }, '#1a7d80', line, 2.4);
+          bodyFin(c, f => { f.moveTo(14, 44); f.quadraticCurveTo(36, 62, 62, 48); f.quadraticCurveTo(76, 36, 82, 16); }, '#1a7d80', line, 2.4);
+        },
+        top: [[-114, 10], [-112, 0], [-104, -8], [-94, -14], [-88, -36], [-66, -52], [-32, -50], [6, -46], [42, -36], [72, -20], [92, -10], [100, -6]],
+        bottom: [[100, 6], [92, 12], [72, 26], [42, 40], [6, 48], [-30, 48], [-62, 40], [-90, 26], [-108, 18]],
+        back: '#1f8a8f', mid: '#5cbcab', gradTop: -50, gradBot: 46, line,
+        tail: { x: 98, y: 0, len: 48, up: 40, low: 40, fork: 0, root: 7, fill: '#2a9a97', speed: 4 },
+        paint(c) {
+          // 비늘의 세로 무늬
+          c.strokeStyle = 'rgba(8, 72, 78, 0.55)'; c.lineWidth = 2;
+          for (let x = -48; x < 96; x += 11) {
+            for (let y = -44, r = 0; y < 44; y += 12, r++) {
+              const ox = r % 2 ? 5 : 0;
+              c.beginPath(); c.moveTo(x + ox, y); c.lineTo(x + ox, y + 7); c.stroke();
+            }
+          }
+          // 혹의 밝은 부분
+          c.fillStyle = 'rgba(155, 230, 215, 0.35)';
+          c.beginPath(); c.ellipse(-66, -38, 22, 9, -0.3, 0, Math.PI * 2); c.fill();
+          // 눈 뒤로 퍼지는 무늬선
+          c.strokeStyle = 'rgba(248, 226, 130, 0.9)'; c.lineWidth = 2.2;
+          [[-14, -24], [-14, -10], [-14, 2], [-24, 16]].forEach(([x, y]) => {
+            c.beginPath(); c.moveTo(-78, -12); c.quadraticCurveTo((x - 78) / 2, (y - 18) / 2 - 2, x - 12, y); c.stroke();
+          });
+        },
+        front(c) {
+          // 두꺼운 입술
+          c.fillStyle = '#e2cf7c'; c.strokeStyle = line; c.lineWidth = 2.2;
+          c.beginPath(); c.ellipse(-109, 4, 8, 6, -0.25, 0, Math.PI * 2); c.fill(); c.stroke();
+          c.beginPath(); c.ellipse(-104, 13, 8, 5, 0.2, 0, Math.PI * 2); c.fill(); c.stroke();
+          c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-97, 8); c.quadraticCurveTo(-88, 12, -82, 7); c.stroke();
+          ringEye(c, -80, -13, 5.6);
+          c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-40, -28); c.quadraticCurveTo(-26, 2, -44, 32); c.stroke();
+          leafFin(c, -30, 6, 46, 26, 0.3 + Math.sin(t * 3) * 0.12, '#e7c95f', line, 2.3);
+        }
+      });
     }
 
     /* 4. AUDIO ENGINE */
@@ -1831,16 +2377,52 @@
       if (!isMuted) playBubbleSound();
     }
 
-    function speakText(text, lang = 'ko-KR') {
-      if (isMuted) return;
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = lang;
-        u.rate = 0.92;
+    // 공부용 음성: 천천히 읽고, 앞 말이 끝난 뒤 잠깐 쉬었다가 다음 말을 읽습니다
+    const SPEECH_RATE = { 'ko-KR': 0.72, 'en-US': 0.62 };
+    const SPEECH_GAP_MS = 1100;
+    let speechToken = 0;
+
+    function speakSequence(items) {
+      if (isMuted || !('speechSynthesis' in window)) return;
+      const token = ++speechToken;
+      const synth = window.speechSynthesis;
+      if (synth.speaking || synth.pending) synth.cancel();
+      let index = 0;
+      const next = () => {
+        if (token !== speechToken || index >= items.length) return;
+        const item = items[index++];
+        const u = new SpeechSynthesisUtterance(item.text);
+        u.lang = item.lang;
+        u.rate = SPEECH_RATE[item.lang] || 0.72;
         u.pitch = 1.05;
-        window.speechSynthesis.speak(u);
-      }
+        let moved = false;
+        const advance = () => {
+          if (moved) return;
+          moved = true;
+          clearTimeout(watchdog);
+          setTimeout(next, SPEECH_GAP_MS);
+        };
+        // 기기에 따라 끝 신호가 안 올 때를 대비한 안전장치
+        const watchdog = setTimeout(advance, Math.max(4000, item.text.length * 400));
+        u.onend = advance;
+        u.onerror = advance;
+        synth.speak(u);
+      };
+      next();
+    }
+
+    function speakText(text, lang = 'ko-KR') {
+      speakSequence([{ text, lang }]);
+    }
+
+    // 괄호 설명을 뺀 짧은 이름 (읽어주기·글자 맞추기용)
+    function shortName(item) {
+      return item.krName.split(' (')[0];
+    }
+
+    function objectJosa(word) {
+      const code = word.charCodeAt(word.length - 1) - 0xAC00;
+      return code >= 0 && code % 28 === 0 ? '를' : '을';
     }
 
     /* 5. CREATURE CLASS (AGENT) - 느긋하고 자연스러운 물리 적용 */
@@ -1860,19 +2442,12 @@
         this.time = Math.random() * 100;
         this.pitch = 0;
 
-        this.coinTimer = 220 + Math.random() * 200;
         this.growthLevel = 1;
       }
 
       update() {
         // 내부 시간 증가 속도 완화 (0.03 -> 0.012)
         this.time += 0.012;
-        this.coinTimer--;
-
-        if (this.coinTimer <= 0) {
-          this.dropCoin();
-          this.coinTimer = 300 + Math.random() * 240;
-        }
 
         if (foodPellets.length > 0) {
           const nearest = foodPellets[0];
@@ -1893,7 +2468,6 @@
             const growthDelta = upgrades.superKrill ? 0.09 : 0.04;
             this.growthLevel = Math.min(1.4, this.growthLevel + growthDelta);
             this.scale = this.info.baseScale * this.z * this.growthLevel;
-            this.dropCoin();
 
             for (let i = 0; i < 4; i++) {
               bubbles.push({
@@ -1926,18 +2500,6 @@
         if (this.y > height - 170) { this.y = height - 170; if (this.vy > 0) this.vy = 0; }
       }
 
-      dropCoin() {
-        let type = this.info.isWhale ? 'diamond' : (this.info.isShark ? 'gold' : 'silver');
-        if (upgrades.fortuneSea && Math.random() < 0.35) {
-          type = 'diamond';
-        }
-
-        const value = type === 'diamond' ? 120 : (type === 'gold' ? 40 : 15);
-
-        // ⚡ 최적화: 오브젝트 풀에서 꺼내 쓰고, 상한(GEM_MAX)이면 가장 오래된 보석을 자석 흡수
-        spawnGem(this.x, this.y + 10, type, value);
-      }
-
       draw(cctx) {
         cctx.save();
         const px = this.x + cameraParallax.x * (1 - this.z);
@@ -1964,143 +2526,69 @@
     }
 
     /* 6. COIN & SNAIL (STINKY) ENGINE */
-    /* ⚡ 저사양(구형 아이패드) 최적화 보석 엔진
-       - 화면 보석 최대 GEM_MAX개, 넘치면 가장 오래된 보석이 코인 카운터로 자석 흡수(점수 지급)
-       - 바닥에서 GEM_TTL_MS 동안 안 주우면 깜빡이다가 사라짐
-       - 객체는 GEM_POOL_SIZE개를 미리 만들어 재사용(GC 부하 없음)
-       - 보석 그림은 처음 한 번만 오프스크린 캔버스에 그려두고 drawImage로 찍기만 함 */
-    const GEM_MAX = 20;
-    const GEM_POOL_SIZE = 25;
-    const GEM_TTL_MS = 9000;     // 바닥 착지 후 9초
-    const GEM_BLINK_MS = 2500;   // 마지막 2.5초 동안 깜빡임
-    const GEM_FADE_MS = 400;
-    const gemPool = [];
-    for (let i = 0; i < GEM_POOL_SIZE; i++) {
-      gemPool.push({ x: 0, y: 0, vy: 0, type: 'silver', value: 0, rotation: 0, landedAt: 0, state: 'fall', fadeStart: 0, sx: 0, sy: 0, t: 0 });
-    }
-
-    const gemSprites = {};
-    function buildGemSprites() {
-      const make = (type) => {
-        const s = document.createElement('canvas');
-        s.width = s.height = 36;
-        const g = s.getContext('2d');
-        g.translate(18, 18);
-        if (type === 'diamond') {
-          g.fillStyle = '#67e8f9'; g.strokeStyle = '#ffffff'; g.lineWidth = 2.4;
-          g.beginPath(); g.moveTo(0, -15); g.lineTo(15, 0); g.lineTo(0, 15); g.lineTo(-15, 0); g.closePath();
-          g.fill(); g.stroke();
-        } else {
-          const grad = g.createRadialGradient(-3, -3, 2, 0, 0, 15);
-          if (type === 'gold') {
-            grad.addColorStop(0, '#fef08a'); grad.addColorStop(0.5, '#f59e0b'); grad.addColorStop(1, '#b45309');
-          } else {
-            grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.5, '#cbd5e1'); grad.addColorStop(1, '#64748b');
-          }
-          g.fillStyle = grad; g.strokeStyle = '#ffffff'; g.lineWidth = 2.2;
-          g.beginPath(); g.arc(0, 0, 13, 0, Math.PI * 2); g.fill(); g.stroke();
-          g.fillStyle = '#ffffff'; g.font = 'bold 12px Fredoka, sans-serif';
-          g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('$', 0, 1);
-        }
-        return s;
-      };
-      gemSprites.diamond = make('diamond');
-      gemSprites.gold = make('gold');
-      gemSprites.silver = make('silver');
-    }
-    buildGemSprites();
-
-    function releaseGem(index) {
-      const c = coins[index];
-      coins.splice(index, 1);
-      gemPool.push(c);
-    }
-
-    // 가장 오래된 보석을 코인 카운터로 날려 보내 점수로 바꿈
-    function magnetizeOldestGem() {
-      for (let i = 0; i < coins.length; i++) {
-        const c = coins[i];
-        if (c.state !== 'magnet' && c.state !== 'fade') {
-          c.state = 'magnet'; c.sx = c.x; c.sy = c.y; c.t = 0;
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function spawnGem(x, y, type, value) {
-      // 상한 도달: 오래된 보석부터 자석 흡수
-      let live = 0;
-      for (let i = 0; i < coins.length; i++) if (coins[i].state !== 'magnet' && coins[i].state !== 'fade') live++;
-      if (live >= GEM_MAX) magnetizeOldestGem();
-      // 풀이 비었으면(흡수 중인 보석이 아직 날아가는 중) 가장 오래된 것을 즉시 점수로 처리
-      if (gemPool.length === 0) collectCoin(0);
-      const c = gemPool.pop();
-      c.x = x; c.y = y; c.vy = 0.9; c.type = type; c.value = value;
-      c.rotation = 0; c.landedAt = 0; c.state = 'fall'; c.fadeStart = 0; c.t = 0;
-      coins.push(c);
-      playBubbleSound();
-    }
-
     function updateAndDrawCoins(cctx) {
       const floorY = height - 55;
       snailPet.y = floorY;
-      const now = performance.now();
 
       for (let i = coins.length - 1; i >= 0; i--) {
         const c = coins[i];
-        let alpha = 1;
-
-        if (c.state === 'magnet') {
-          // 왼쪽 위 코인 카운터 쪽으로 쏙 빨려 들어감
-          c.t += 0.06;
-          const e = c.t * c.t;
-          c.x = c.sx + (60 - c.sx) * e;
-          c.y = c.sy + (30 - c.sy) * e;
-          alpha = 1 - c.t * 0.5;
-          if (c.t >= 1) { collectCoin(i, true); continue; }
-        } else if (c.state === 'fade') {
-          alpha = 1 - (now - c.fadeStart) / GEM_FADE_MS;
-          if (alpha <= 0) { releaseGem(i); continue; }
-        } else {
-          if (c.state === 'fall') {
-            c.y += c.vy;
-            if (c.y >= floorY) { c.y = floorY; c.vy = 0; c.state = 'floor'; c.landedAt = now; }
-          }
-          if (c.state === 'floor') {
-            const age = now - c.landedAt;
-            if (age > GEM_TTL_MS) { c.state = 'fade'; c.fadeStart = now; }
-            else if (age > GEM_TTL_MS - GEM_BLINK_MS) {
-              alpha = ((now / 150) | 0) % 2 === 0 ? 1 : 0.25; // 깜빡깜빡
-            }
-          }
-        }
+        c.y += c.vy;
         c.rotation += 0.05;
 
-        const spr = gemSprites[c.type] || gemSprites.silver;
-        cctx.globalAlpha = alpha < 0 ? 0 : alpha;
-        cctx.setTransform(Math.cos(c.rotation), Math.sin(c.rotation), -Math.sin(c.rotation), Math.cos(c.rotation), c.x, c.y);
-        cctx.drawImage(spr, -18, -18);
+        if (c.y >= floorY) {
+          c.y = floorY;
+          c.vy = 0;
+        }
+
+        cctx.save();
+        cctx.translate(c.x, c.y);
+        cctx.rotate(c.rotation);
+
+        if (c.type === 'diamond') {
+          cctx.fillStyle = '#67e8f9';
+          cctx.strokeStyle = '#ffffff';
+          cctx.lineWidth = 2.4;
+          cctx.beginPath();
+          cctx.moveTo(0, -15); cctx.lineTo(15, 0); cctx.lineTo(0, 15); cctx.lineTo(-15, 0);
+          cctx.closePath();
+          cctx.fill(); cctx.stroke();
+        } else {
+          const grad = cctx.createRadialGradient(-3, -3, 2, 0, 0, 15);
+          if (c.type === 'gold') {
+            grad.addColorStop(0, '#fef08a');
+            grad.addColorStop(0.5, '#f59e0b');
+            grad.addColorStop(1, '#b45309');
+          } else {
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.5, '#cbd5e1');
+            grad.addColorStop(1, '#64748b');
+          }
+          cctx.fillStyle = grad;
+          cctx.strokeStyle = '#ffffff';
+          cctx.lineWidth = 2.2;
+          cctx.beginPath();
+          cctx.arc(0, 0, 13, 0, Math.PI * 2);
+          cctx.fill(); cctx.stroke();
+
+          cctx.fillStyle = '#ffffff';
+          cctx.font = 'bold 12px Fredoka';
+          cctx.textAlign = 'center';
+          cctx.textBaseline = 'middle';
+          cctx.fillText('$', 0, 1);
+        }
+        cctx.restore();
       }
-      cctx.setTransform(1, 0, 0, 1, 0, 0);
-      cctx.globalAlpha = 1;
 
       // 달팽이 이동 속도 (업그레이드 반영)
       const snailSpeed = upgrades.fastSnail ? 2.4 : 1.1;
-      let targetIndex = -1;
-      for (let i = 0; i < coins.length; i++) {
-        if (coins[i].state === 'floor') { targetIndex = i; break; }
-      }
+      const floorCoins = coins.filter(c => c.y >= floorY - 5);
 
-      if (targetIndex >= 0) {
-        const target = coins[targetIndex];
+      if (floorCoins.length > 0) {
+        const target = floorCoins[0];
         const dx = target.x - snailPet.x;
         snailPet.heading = dx > 0 ? 1 : -1;
         snailPet.x += snailPet.heading * snailSpeed;
 
-        if (Math.abs(dx) < 20) {
-          collectCoin(targetIndex);
-        }
       } else {
         snailPet.x += snailPet.heading * (snailSpeed * 0.45);
         if (snailPet.x > width - 60) snailPet.heading = -1;
@@ -2156,20 +2644,178 @@
         return false;
       }
 
-      if (goldCoins < item.price) {
-        showToastMsg(`🪙 코인이 부족해요! (${item.price}코인 필요)`);
+      // 재이가 직접 그린 물고기는 바로 입양, 나머지는 글자를 맞춰서 입양
+      if (item.id === 'custom_fish') {
+        completeAdoption(item);
+      } else {
+        startSpellAdoption(item);
+      }
+      return true;
+    }
+
+    function completeAdoption(item) {
+      playSuccessChime();
+      spawnCreature(item.id, false);
+      showToastMsg(`🎉 ${shortName(item)} 입양 완료! (${getSpeciesCount(item.id)}/5마리)`);
+      renderAnimalDock(); // 버튼 상태 갱신
+    }
+
+    /* ✏️ 글자 맞춰 입양 */
+    let spellAnimal = null;
+    let spellChars = [];
+    let spellIndex = 0;
+    let spellMisses = 0;
+    let spellCloseTimer = null;
+
+    function shuffled(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function startSpellAdoption(item) {
+      clearTimeout(spellCloseTimer);
+      spellAnimal = item;
+      spellChars = Array.from(shortName(item).replace(/\s+/g, ''));
+      spellIndex = 0;
+      spellMisses = 0;
+
+      drawDockThumbnail(document.getElementById('spellCanvas'), item.id, 3);
+      document.getElementById('spell-msg').innerText = '이름을 듣고 글자를 순서대로 눌러요';
+
+      // 글자 칸: 흐린 글자를 보고 찾을 수 있게 표시
+      const slots = document.getElementById('spell-slots');
+      slots.innerHTML = '';
+      spellChars.forEach(ch => {
+        const slot = document.createElement('div');
+        slot.className = 'spell-slot';
+        slot.innerText = ch;
+        slots.appendChild(slot);
+      });
+
+      // 글자 카드: 이름 글자 + 헷갈리게 하는 글자
+      const pool = [...new Set(ALL_SPECIES_IDS.flatMap(id => Array.from(shortName(SPECIES[id]).replace(/\s+/g, ''))))]
+        .filter(ch => !spellChars.includes(ch));
+      const extras = shuffled(pool).slice(0, spellChars.length <= 3 ? 3 : 2);
+      const tiles = document.getElementById('spell-tiles');
+      tiles.innerHTML = '';
+      shuffled([...spellChars, ...extras]).forEach(ch => {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'spell-tile';
+        tile.innerText = ch;
+        tile.onclick = () => handleSpellTile(tile, ch);
+        tiles.appendChild(tile);
+      });
+
+      markCurrentSpellSlot();
+      document.getElementById('spell-modal').classList.remove('hidden');
+      speakSpellName();
+    }
+
+    function markCurrentSpellSlot() {
+      document.querySelectorAll('.spell-slot').forEach((slot, i) => {
+        slot.classList.toggle('current', i === spellIndex);
+      });
+    }
+
+    function speakSpellName() {
+      if (spellAnimal) speakText(shortName(spellAnimal), 'ko-KR');
+    }
+
+    function handleSpellTile(tile, ch) {
+      if (!spellAnimal || spellIndex >= spellChars.length) return;
+
+      if (ch !== spellChars[spellIndex]) {
+        // 틀려도 벌칙 없이, 두 번 틀리면 맞는 글자를 반짝여 줍니다
+        spellMisses++;
         playBubbleSound();
-        return false;
+        tile.classList.remove('wrong');
+        void tile.offsetWidth;
+        tile.classList.add('wrong');
+        document.getElementById('spell-msg').innerText = `"${spellChars[spellIndex]}" 글자를 찾아볼까?`;
+        speakText(spellChars[spellIndex], 'ko-KR');
+        if (spellMisses >= 2) {
+          const target = [...document.querySelectorAll('.spell-tile:not(.used)')].find(t => t.innerText === spellChars[spellIndex]);
+          if (target) target.classList.add('hint');
+        }
+        return;
       }
 
-      goldCoins -= item.price;
-      document.getElementById('coin-counter').innerText = goldCoins;
-      playSuccessChime();
+      document.querySelectorAll('.spell-tile.hint').forEach(t => t.classList.remove('hint'));
+      tile.classList.add('used');
+      document.querySelectorAll('.spell-slot')[spellIndex].classList.add('filled');
+      spellIndex++;
+      spellMisses = 0;
+      markCurrentSpellSlot();
 
-      spawnCreature(speciesId, false);
-      showToastMsg(`🎉 ${item.krName} 입양 완료! (${currentCount + 1}/5마리)`);
-      renderAnimalDock(); // 버튼 상태 갱신
-      return true;
+      if (spellIndex < spellChars.length) {
+        playBubbleSound();
+        document.getElementById('spell-msg').innerText = '잘했어요! 다음 글자를 찾아봐요';
+        speakText(ch, 'ko-KR');
+        return;
+      }
+
+      const item = spellAnimal;
+      const name = shortName(item);
+      document.getElementById('spell-msg').innerText = `딩동댕! 재이가 ${name}${objectJosa(name)} 입양했어요!`;
+      completeAdoption(item);
+      speakSequence([
+        { text: name, lang: 'ko-KR' },
+        { text: `재이가 ${name}${objectJosa(name)} 입양했어요!`, lang: 'ko-KR' }
+      ]);
+      spellCloseTimer = setTimeout(hideSpellModal, 4200);
+    }
+
+    function hideSpellModal() {
+      document.getElementById('spell-modal').classList.add('hidden');
+      spellAnimal = null;
+    }
+
+    function closeSpellModal() {
+      clearTimeout(spellCloseTimer);
+      playBubbleSound();
+      hideSpellModal();
+    }
+
+    function switchCategory(category) {
+      currentCategory = category;
+      playBubbleSound();
+      updateCategoryTabs();
+      renderAnimalDock();
+    }
+
+    function updateCategoryTabs() {
+      document.querySelectorAll('.cat-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.cat === currentCategory);
+      });
+    }
+
+    function categoryLabelOf(speciesId) {
+      const key = Object.keys(CATEGORY_LISTS).find(k => CATEGORY_LISTS[k].includes(speciesId));
+      return CATEGORY_LABELS[key || 'fish'];
+    }
+
+    /* 전체화면 (아이패드 사파리는 webkit 방식도 함께 지원) */
+    function toggleFullscreen() {
+      const root = document.documentElement;
+      const current = document.fullscreenElement || document.webkitFullscreenElement;
+      if (current) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        return;
+      }
+      const request = root.requestFullscreen || root.webkitRequestFullscreen;
+      const showTip = () => showToastMsg('사파리 공유 버튼 → 홈 화면에 추가로 실행해 보세요');
+      if (!request) { showTip(); return; }
+      try {
+        const result = request.call(root);
+        if (result && result.catch) result.catch(showTip);
+      } catch (e) {
+        showTip();
+      }
     }
 
     function showToastMsg(msg) {
@@ -2201,7 +2847,6 @@
     function clearTank() {
       playBubbleSound();
       creatures = [];
-      while (coins.length) collectCoin(coins.length - 1, true); // 남은 보석은 점수로 정산 후 풀 반납
       renderAnimalDock();
       showToastMsg('수조를 깨끗하게 비웠습니다.');
     }
@@ -2212,19 +2857,13 @@
 
       const btnAtl = document.getElementById('btn-atlantic');
       const btnInd = document.getElementById('btn-indian');
-      const title = document.getElementById('dock-ocean-title');
 
       if (oceanName === 'atlantic') {
         btnAtl.className = "flex items-center space-x-1 px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all bg-gradient-to-b from-sky-400 to-blue-600 text-white shadow border border-yellow-200";
-        btnInd.className = "flex items-center space-x-1 px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all text-cyan-200 hover:text-white";
-        title.innerText = "대서양 고래 & 백상아리 도감";
-      } else {
+        btnInd.className = "flex items-center space-x-1 px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all text-cyan-200 hover:text-white";      } else {
         btnInd.className = "flex items-center space-x-1 px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all bg-gradient-to-b from-teal-400 to-emerald-600 text-white shadow border border-yellow-200";
         btnAtl.className = "flex items-center space-x-1 px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all text-cyan-200 hover:text-white";
-        title.innerText = "인도양 산호초 & 상어 도감";
       }
-
-      renderAnimalDock();
     }
 
     function feedCreatures(originX, originY) {
@@ -2246,15 +2885,6 @@
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
-
-      // 1. 코인 클릭 시 바로 수집
-      for (let i = coins.length - 1; i >= 0; i--) {
-        const c = coins[i];
-        if (Math.hypot(mx - c.x, my - c.y) < 28) {
-          collectCoin(i);
-          return;
-        }
-      }
 
       const currentTime = new Date().getTime();
       const tapGap = currentTime - lastTapTime;
@@ -2309,7 +2939,7 @@
       const container = document.getElementById('animal-dock-container');
       if (!container) return;
       container.innerHTML = '';
-      const list = OCEAN_LISTS[currentOcean] || [];
+      const list = ALL_SPECIES_IDS;
 
       list.forEach(id => {
         const item = SPECIES[id];
@@ -2456,70 +3086,6 @@
       }
     }
 
-    /* 🏪 수조 업그레이드 상점 기능 */
-    function openShopModal() {
-      playBubbleSound();
-      updateShopUI();
-      document.getElementById('shop-modal').classList.remove('hidden');
-    }
-
-    function closeShopModal() {
-      playBubbleSound();
-      document.getElementById('shop-modal').classList.add('hidden');
-    }
-
-    function updateShopUI() {
-      const btnKrill = document.getElementById('btn-buy-krill');
-      const btnSnail = document.getElementById('btn-buy-snail');
-      const btnFortune = document.getElementById('btn-buy-fortune');
-
-      if (upgrades.superKrill) {
-        btnKrill.innerText = "보유중 (완료)";
-        btnKrill.className = "bg-slate-700 text-slate-400 font-bold px-3 py-1.5 rounded-xl";
-        btnKrill.disabled = true;
-      }
-      if (upgrades.fastSnail) {
-        btnSnail.innerText = "보유중 (완료)";
-        btnSnail.className = "bg-slate-700 text-slate-400 font-bold px-3 py-1.5 rounded-xl";
-        btnSnail.disabled = true;
-      }
-      if (upgrades.fortuneSea) {
-        btnFortune.innerText = "보유중 (완료)";
-        btnFortune.className = "bg-slate-700 text-slate-400 font-bold px-3 py-1.5 rounded-xl";
-        btnFortune.disabled = true;
-      }
-    }
-
-    function buyUpgrade(type, cost) {
-      if (goldCoins < cost) {
-        showToastMsg(`🪙 코인이 부족합니다! (${cost}코인 필요)`);
-        playBubbleSound();
-        return;
-      }
-
-      goldCoins -= cost;
-      document.getElementById('coin-counter').innerText = goldCoins;
-      playSuccessChime();
-
-      if (type === 'krill') upgrades.superKrill = true;
-      if (type === 'snail') upgrades.fastSnail = true;
-      if (type === 'fortune') upgrades.fortuneSea = true;
-
-      updateShopUI();
-      showToastMsg(`✨ 업그레이드 적용 완료!`);
-    }
-
-    let coinCounterEl = null;
-    function collectCoin(index, quiet) {
-      if (index < 0 || index >= coins.length) return;
-      const c = coins[index];
-      goldCoins += c.value;
-      if (!coinCounterEl) coinCounterEl = document.getElementById('coin-counter');
-      coinCounterEl.innerText = goldCoins;
-      if (!quiet) playCoinSound();
-      releaseGem(index); // 풀로 반납 (재사용)
-    }
-
     function initParticles() {
       marineSnow.length = 0;
       for (let i = 0; i < 45; i++) {
@@ -2645,8 +3211,8 @@
       container.innerHTML = '';
 
       // 나만의 물고기가 있으면 목록 맨 앞에 추가
-      const list = [...(OCEAN_LISTS[currentOcean] || [])];
-      if (customFishImageData && !list.includes('custom_fish')) {
+      const list = [...CATEGORY_LISTS[currentCategory]];
+      if (currentCategory === 'fish' && customFishImageData && !list.includes('custom_fish')) {
         list.unshift('custom_fish');
       }
 
@@ -2681,7 +3247,7 @@
         // 가격 표시
         const priceTag = document.createElement('p');
         priceTag.className = "text-amber-300 font-pop text-[11px] font-black";
-        priceTag.innerText = item.price === 0 ? "✨ 무료 입양" : `🪙 ${item.price} 코인`;
+        priceTag.innerText = item.price === 0 ? "✨ 바로 입양" : `✏️ ${Array.from(shortName(item).replace(/\s+/g, '')).length}글자 맞추기`;
         card.appendChild(priceTag);
 
         // 버튼 행 (도감 보기 / 입양하기)
@@ -2732,7 +3298,9 @@
       });
     }
 
-    function drawDockThumbnail(miniCanvas, speciesId) {
+    const THUMB_SCALE = { ocean_sunfish: 0.21, sailfish: 0.26, saw_shark: 0.26, fin_whale: 0.2, clownfish: 0.45, pufferfish: 0.42, blue_tang: 0.4, flounder: 0.36, salmon: 0.34, moray_eel: 0.3 };
+
+    function drawDockThumbnail(miniCanvas, speciesId, zoom = 1) {
       if (!miniCanvas) return;
       const mctx = miniCanvas.getContext('2d');
       mctx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
@@ -2740,7 +3308,7 @@
       mctx.translate(miniCanvas.width / 2, miniCanvas.height / 2);
 
       // 생물별 최적화된 썸네일 축척 및 위치 보정
-      let cardScale = 0.28;
+      let cardScale = THUMB_SCALE[speciesId] || 0.28;
       if (speciesId === 'custom_fish') cardScale = 0.38;
       else if (speciesId === 'sperm_whale') cardScale = 0.21;
       else if (speciesId === 'blue_whale') cardScale = 0.20;
@@ -2757,7 +3325,7 @@
       else if (speciesId === 'giant_octopus') cardScale = 0.32;
       else if (speciesId === 'moon_jellyfish') cardScale = 0.38;
 
-      mctx.scale(cardScale, cardScale);
+      mctx.scale(cardScale * zoom, cardScale * zoom);
       renderCreatureShape(mctx, speciesId, 0);
       mctx.restore();
     }
@@ -2769,7 +3337,7 @@
       selectedModalAnimal = item;
       playBubbleSound();
 
-      document.getElementById('modal-ocean-tag').innerText = item.ocean === '대서양' ? '🌊 대서양 서식' : '🏝️ 인도양 산호초 서식';
+      document.getElementById('modal-ocean-tag').innerText = categoryLabelOf(item.id);
       document.getElementById('modal-kr-name').innerText = item.krName;
       document.getElementById('modal-en-name').innerText = item.enName;
       document.getElementById('modal-phonetic').innerText = item.phonetic;
@@ -2833,15 +3401,15 @@
 
     function speakBilingualCurrent() {
       if (!selectedModalAnimal) return;
-      speakText(selectedModalAnimal.krName, 'ko-KR');
-      setTimeout(() => {
-        speakText(selectedModalAnimal.enName, 'en-US');
-      }, 1200);
+      speakSequence([
+        { text: shortName(selectedModalAnimal), lang: 'ko-KR' },
+        { text: selectedModalAnimal.enName.split(' (')[0], lang: 'en-US' }
+      ]);
     }
 
     function startSeaQuiz() {
       playSuccessChime();
-      const allIds = [...OCEAN_LISTS.atlantic, ...OCEAN_LISTS.indian];
+      const allIds = [...ALL_SPECIES_IDS];
       const randomId = allIds[Math.floor(Math.random() * allIds.length)];
       quizCurrentAnimal = SPECIES[randomId];
 
@@ -2898,7 +3466,8 @@
 
     function speakQuizWord() {
       if (!quizCurrentAnimal) return;
-      speakText(`재이야, ${quizCurrentAnimal.krName}을 찾아볼까?`, 'ko-KR');
+      const quizName = shortName(quizCurrentAnimal);
+      speakText(`재이야, ${quizName}${objectJosa(quizName)} 찾아볼까?`, 'ko-KR');
     }
 
     function handleQuizAnswer(selectedId, btnElement) {
@@ -2911,7 +3480,7 @@
         feedback.className = "mt-3 py-2 px-4 rounded-xl font-black text-xs sm:text-sm bg-emerald-500/20 text-emerald-300 border border-emerald-400";
         btnElement.classList.add('bg-emerald-900/60', 'border-emerald-400');
 
-        speakText(`와, 맞았어요! ${quizCurrentAnimal.krName}! 정말 멋져요 재이야!`, 'ko-KR');
+        speakText(`와, 맞았어요! ${shortName(quizCurrentAnimal)}! 정말 멋져요 재이야!`, 'ko-KR');
         spawnCreature(quizCurrentAnimal.id, true);
 
         setTimeout(closeQuizModal, 2000);
@@ -3062,10 +3631,526 @@
       };
     }
 
+    /* ===== 새로 추가한 바다 생물 렌더러 ===== */
+
+    // 물고기 꼬리: 세로로 서 있고 좌우로 흔들어서 옆에서 보면 폭이 변해요
+    function fishTail(ctx, t, o) {
+      const sp = o.speed || 4;
+      const r = o.root || 5;
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.scale(0.82 + 0.18 * Math.cos(t * sp), 1);
+      ctx.beginPath();
+      ctx.moveTo(-8, -r);
+      ctx.quadraticCurveTo(o.len * 0.45, -o.up * 0.55, o.len, -o.up);
+      ctx.quadraticCurveTo(o.len * (1 - o.fork * 0.5), -o.up * 0.35, o.len * (1 - o.fork), 0);
+      ctx.quadraticCurveTo(o.len * (1 - o.fork * 0.5), o.low * 0.35, o.len, o.low);
+      ctx.quadraticCurveTo(o.len * 0.45, o.low * 0.55, -8, r);
+      ctx.closePath();
+      ctx.fillStyle = o.fill; ctx.fill();
+      ctx.strokeStyle = o.stroke; ctx.lineWidth = 2.6; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawFishBase(ctx, t, s) {
+      const outline = s.top.concat(s.bottom);
+      if (s.behind) s.behind(ctx, t);
+      if (s.tail) fishTail(ctx, t, Object.assign({ stroke: s.line }, s.tail));
+      const g = ctx.createLinearGradient(0, s.gradTop || -34, 0, s.gradBot || 32);
+      g.addColorStop(0, s.back);
+      g.addColorStop(1, s.mid);
+      smoothClosedPath(ctx, outline);
+      ctx.fillStyle = g; ctx.fill();
+      if (s.paint) {
+        ctx.save(); smoothClosedPath(ctx, outline); ctx.clip();
+        s.paint(ctx, t);
+        ctx.restore();
+      }
+      smoothClosedPath(ctx, outline);
+      ctx.strokeStyle = s.line; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.stroke();
+      if (s.front) s.front(ctx, t);
+    }
+
+    function triFin(c, a, b, d, fill, line) {
+      bodyFin(c, f => { f.moveTo(a[0], a[1]); f.quadraticCurveTo((a[0] + b[0]) / 2 - 4, (a[1] + b[1]) / 2, b[0], b[1]); f.quadraticCurveTo((b[0] + d[0]) / 2 - 5, (b[1] + d[1]) / 2, d[0], d[1]); }, fill, line, 2.2);
+    }
+
+    /* 상어 */
+    function drawMakoShark(ctx, t) {
+      drawStandardShark(ctx, t, {
+        top: [[-122, 4], [-116, -3], [-102, -11], [-80, -18], [-50, -24], [-18, -26], [14, -24], [46, -18], [76, -10], [102, -5], [124, -3]],
+        bottom: [[124, 3], [102, 5], [78, 10], [50, 16], [18, 21], [-16, 23], [-48, 21], [-78, 15], [-100, 10], [-116, 7]],
+        back: '#2f62ad', mid: '#234a88', fin: '#234a88', farFin: '#173463', outlineColor: '#0c1c38', belly: '#f8fafc',
+        bellyLine: [[-126, 6], [-90, 5], [-50, 6], [0, 7], [50, 5], [100, 3], [130, 2], [130, 60], [-126, 60]],
+        tail: { x: 120, y: 0, up: 58, upAng: 1.02, low: 52, lowAng: 0.98, root: 4 },
+        d1: [-16, -25, -8, -50, 8, -62, 8, -40, 26, -22],
+        d2: [96, -4, 6], anal: [96, 4, 6], pelvic: [50, 15, 9],
+        gills: [-72, -66, -60, -54, -48], gillY: [-11, 9],
+        mouth: [-108, 9, -94, 16, -78, 14], teeth: true,
+        eye: [-92, -6, 4.4], pec: [-38, 11, 0.85]
+      });
+    }
+
+    function drawLemonShark(ctx, t) {
+      drawStandardShark(ctx, t, {
+        top: [[-108, 6], [-108, -3], [-98, -12], [-78, -19], [-50, -24], [-18, -26], [14, -24], [46, -19], [76, -12], [102, -6], [122, -3]],
+        bottom: [[122, 3], [100, 6], [74, 11], [44, 18], [12, 23], [-20, 25], [-52, 23], [-80, 18], [-98, 13], [-106, 10]],
+        back: '#c9ae5c', mid: '#a38c47', fin: '#a38c47', farFin: '#7d6b35', outlineColor: '#3a3116', belly: '#fbf6dc',
+        bellyLine: [[-112, 8], [-80, 7], [-40, 9], [0, 9], [40, 7], [90, 4], [130, 2], [130, 60], [-112, 60]],
+        tail: { x: 118, y: 0, up: 66, upAng: 0.66, low: 30, lowAng: 1.0, root: 4 },
+        d1: [-8, -25, 0, -46, 12, -54, 12, -36, 28, -22],
+        d2: [76, -11, 22], anal: [82, 8, 11], pelvic: [42, 16, 11],
+        gills: [-68, -62, -56, -50, -44], gillY: [-10, 9],
+        mouth: [-100, 11, -88, 17, -76, 15], teeth: true,
+        eye: [-88, -6, 4], pec: [-40, 12, 0.9]
+      });
+    }
+
+    function drawNurseShark(ctx, t) {
+      const line = '#2e2214';
+      drawStandardShark(ctx, t, {
+        top: [[-106, 8], [-106, -2], [-96, -11], [-76, -17], [-48, -21], [-16, -23], [16, -22], [46, -19], [76, -14], [102, -8], [122, -4]],
+        bottom: [[122, 4], [100, 8], [74, 13], [44, 19], [12, 23], [-20, 24], [-52, 23], [-80, 20], [-98, 15], [-105, 12]],
+        back: '#9f7f56', mid: '#7d6241', fin: '#7d6241', farFin: '#5f4a31', outlineColor: line, belly: '#e6d5b6',
+        bellyLine: [[-110, 12], [-70, 13], [-30, 14], [10, 14], [50, 11], [90, 7], [130, 3], [130, 60], [-110, 60]],
+        tail: { x: 118, y: 0, up: 88, upAng: 0.25, low: 14, lowAng: 0.9, root: 5 },
+        d1: [26, -20, 34, -42, 46, -42, 56, -38, 56, -15],
+        d2: [84, -12, 18], anal: [90, 10, 10], pelvic: [48, 16, 11],
+        gills: [-66, -61, -56, -51, -46], gillY: [-8, 10],
+        mouth: [-104, 10, -96, 13, -86, 12], teeth: false,
+        eye: [-90, -6, 2.8], pec: [-44, 14, 0.8],
+        extra(c) {
+          c.strokeStyle = line; c.lineWidth = 2.4; c.lineCap = 'round';
+          c.beginPath(); c.moveTo(-103, 10); c.quadraticCurveTo(-110, 14, -112, 22); c.stroke();
+          c.lineCap = 'butt';
+        }
+      });
+    }
+
+    function drawSawShark(ctx, t) {
+      const line = '#2c2a23';
+      drawStandardShark(ctx, t, {
+        top: [[-100, 2], [-90, -6], [-70, -12], [-44, -17], [-14, -19], [18, -17], [50, -13], [80, -8], [104, -4], [124, -2]],
+        bottom: [[124, 2], [104, 4], [80, 8], [50, 13], [18, 17], [-14, 18], [-44, 16], [-70, 11], [-90, 7], [-100, 4]],
+        back: '#9f9988', mid: '#7f7a6c', fin: '#7f7a6c', farFin: '#615d52', outlineColor: line, belly: '#f4f1e6',
+        gradTop: -19, gradBot: 16,
+        bellyLine: [[-104, 5], [-70, 5], [-30, 6], [10, 6], [50, 5], [90, 3], [130, 1], [130, 50], [-104, 50]],
+        tail: { x: 120, y: 0, up: 58, upAng: 0.5, low: 18, lowAng: 1.0, root: 3 },
+        d1: [-4, -18, 2, -36, 12, -42, 12, -28, 26, -16],
+        d2: [58, -11, 16], pelvic: [40, 13, 8],
+        gills: [-56, -52, -48, -44, -40], gillY: [-8, 6],
+        mouth: [-86, 8, -78, 11, -70, 10], teeth: false,
+        eye: [-78, -6, 3.8], pec: [-30, 10, 0.7],
+        extra(c) {
+          // 톱니가 달린 긴 주둥이
+          c.fillStyle = '#f7f5ec';
+          c.strokeStyle = line;
+          c.lineWidth = 1;
+          for (let x = -102; x > -186; x -= 9) {
+            const half = 6 - (x + 96) / -90 * 3.5;
+            [-1, 1].forEach(s => {
+              c.beginPath(); c.moveTo(x, s * half); c.lineTo(x - 2, s * (half + 7)); c.lineTo(x - 5, s * half); c.closePath(); c.fill(); c.stroke();
+            });
+          }
+          c.fillStyle = '#8f8a7a'; c.lineWidth = 2.4; c.lineJoin = 'round';
+          c.beginPath(); c.moveTo(-94, -6); c.lineTo(-190, -2); c.quadraticCurveTo(-194, 0, -190, 2); c.lineTo(-94, 6); c.closePath(); c.fill(); c.stroke();
+          c.strokeStyle = line; c.lineWidth = 2; c.lineCap = 'round';
+          c.beginPath(); c.moveTo(-146, 4); c.quadraticCurveTo(-142, 18, -132, 24); c.stroke();
+          c.lineCap = 'butt';
+        }
+      });
+    }
+
+    /* 고래 */
+    function drawDolphinBody(ctx, t, s) {
+      const flap = Math.sin(t * 2) * 0.08;
+      const line = s.line;
+      drawWhaleBase(ctx, t, {
+        top: [[-120, 4], [-117, -1], [-100, -3], [-90, -8], [-82, -18], [-66, -26], [-40, -31], [-8, -32], [24, -28], [54, -20], [80, -11], [100, -6]],
+        bottom: [[100, 3], [82, 8], [58, 15], [30, 23], [0, 28], [-32, 28], [-60, 23], [-84, 14], [-100, 7], [-117, 7]],
+        fluke: [96, -1, 44],
+        back: s.back, mid: s.mid, outlineColor: line, beatSpeed: 3.2, beatAmp: 0.18,
+        behind(c) { leafFin(c, -46, 14, 34, 11, 0.4 - flap, s.finFar, line, 2.2); },
+        paint: s.paint,
+        front(c) {
+          bodyFin(c, f => { f.moveTo(-14, -31); f.quadraticCurveTo(2, -42, 18, -58); f.quadraticCurveTo(14, -40, 34, -26); }, s.back, line, 2.6);
+          c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-119, 5); c.quadraticCurveTo(-100, 8, -82, 0); c.stroke();
+          ringEye(c, -74, -6, 3.4);
+          leafFin(c, -52, 16, 42, 13, 0.85 + flap, s.fin, line, 2.4);
+        }
+      });
+    }
+
+    function drawBottlenoseDolphin(ctx, t) {
+      drawDolphinBody(ctx, t, {
+        back: '#74828f', mid: '#8f9ba7', fin: '#6b7884', finFar: '#57636e', line: '#1e2a36',
+        paint(c) {
+          smoothClosedPath(c, [[-124, 5], [-90, 8], [-60, 12], [-30, 14], [10, 14], [50, 10], [80, 6], [80, 50], [-124, 50]]);
+          c.fillStyle = '#eaeff3'; c.fill();
+        }
+      });
+    }
+
+    function drawCommonDolphin(ctx, t) {
+      drawDolphinBody(ctx, t, {
+        back: '#27323f', mid: '#303c4a', fin: '#232d38', finFar: '#1a222b', line: '#0b1118',
+        paint(c) {
+          c.fillStyle = '#ffffff';
+          smoothClosedPath(c, [[-124, 5], [-90, 9], [-60, 14], [-30, 16], [10, 16], [50, 11], [80, 6], [80, 50], [-124, 50]]); c.fill();
+          // 옆구리의 모래시계 무늬
+          c.fillStyle = '#e8c66a';
+          smoothClosedPath(c, [[-72, 2], [-42, -9], [-8, -6], [8, 10], [-30, 16], [-66, 12]]); c.fill();
+          c.fillStyle = '#a3adb8';
+          smoothClosedPath(c, [[4, -2], [40, -9], [78, -2], [62, 9], [20, 13]]); c.fill();
+        }
+      });
+    }
+
+    function drawFinlessPorpoise(ctx, t) {
+      const flap = Math.sin(t * 2) * 0.08;
+      const line = '#36414a';
+      drawWhaleBase(ctx, t, {
+        top: [[-96, 6], [-96, -6], [-86, -17], [-68, -25], [-42, -29], [-12, -30], [20, -26], [50, -18], [76, -10], [96, -5]],
+        bottom: [[96, 3], [78, 8], [54, 15], [26, 22], [-4, 26], [-34, 26], [-62, 21], [-82, 14], [-94, 10]],
+        fluke: [92, -1, 36],
+        back: '#8d979f', mid: '#c0c8ce', outlineColor: line, gradTop: -30, gradBot: 26, beatSpeed: 3,
+        behind(c) { leafFin(c, -42, 13, 24, 10, 0.4 - flap, '#79838b', line, 2); },
+        front(c) {
+          c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-95, 5); c.quadraticCurveTo(-84, 12, -70, 3); c.stroke();
+          drawWhaleEye(c, -68, -7, 3.6, false);
+          leafFin(c, -48, 16, 30, 12, 0.85 + flap, '#858f97', line, 2.2);
+        }
+      });
+    }
+
+    function drawFinWhale(ctx, t) {
+      const flap = Math.sin(t * 1.6) * 0.06;
+      const line = '#141c24';
+      drawWhaleBase(ctx, t, {
+        top: [[-142, 3], [-136, -5], [-116, -13], [-86, -20], [-48, -24], [-8, -25], [30, -23], [66, -18], [98, -12], [124, -7], [146, -4]],
+        bottom: [[146, 3], [124, 7], [94, 12], [56, 19], [16, 24], [-28, 26], [-72, 24], [-108, 18], [-130, 11], [-140, 6]],
+        fluke: [142, -0.5, 54],
+        back: '#4f5d6b', mid: '#333f4b', outlineColor: line, gradTop: -26, gradBot: 26, beatSpeed: 2.2,
+        behind(c) { leafFin(c, -68, 13, 34, 9, 0.3 - flap, '#2a343e', line, 2.2); },
+        paint(c) {
+          smoothClosedPath(c, [[-146, 6], [-110, 8], [-70, 11], [-30, 12], [10, 13], [60, 10], [110, 6], [110, 50], [-146, 50]]);
+          c.fillStyle = '#eef2f5'; c.fill();
+          c.strokeStyle = '#9fadba'; c.lineWidth = 1.3;
+          for (let k = 0; k < 4; k++) {
+            c.beginPath(); c.moveTo(-136, 9 + k * 3); c.quadraticCurveTo(-60, 15 + k * 3, 20, 16 + k * 2.4); c.stroke();
+          }
+          c.fillStyle = 'rgba(205, 215, 225, 0.4)';
+          c.beginPath(); c.ellipse(-60, -8, 30, 5, -0.15, 0, Math.PI * 2); c.fill();
+        },
+        front(c) {
+          bodyFin(c, f => { f.moveTo(90, -13); f.quadraticCurveTo(104, -15, 112, -29); f.quadraticCurveTo(112, -17, 124, -8); }, '#46535f', line, 2.4);
+          c.strokeStyle = line; c.lineWidth = 2.2;
+          c.beginPath(); c.moveTo(-141, 4); c.quadraticCurveTo(-112, 7, -84, 2); c.stroke();
+          ringEye(c, -78, -3, 3.6);
+          leafFin(c, -74, 14, 42, 10, 0.55 + flap, '#3f4c58', line, 2.2);
+        }
+      });
+    }
+
+    /* 물고기 */
+    function drawBluefinTuna(ctx, t) {
+      const line = '#0d1b33', gold = '#f2c230';
+      drawFishBase(ctx, t, {
+        top: [[-104, 6], [-100, -6], [-84, -18], [-56, -28], [-22, -33], [14, -31], [48, -23], [76, -13], [98, -6], [112, -3]],
+        bottom: [[112, 3], [98, 6], [76, 13], [48, 23], [14, 31], [-22, 33], [-56, 28], [-84, 18], [-100, 10]],
+        back: '#1d3a73', mid: '#d3dce5', gradTop: -24, gradBot: 18, line,
+        tail: { x: 110, y: 0, len: 46, up: 46, low: 46, fork: 0.72, root: 3, fill: '#1f3a6e', speed: 5 },
+        front(c) {
+          triFin(c, [-16, -32], [0, -50], [22, -30], '#1d3a73', line);
+          triFin(c, [36, -26], [58, -58], [60, -21], gold, line);
+          triFin(c, [36, 26], [58, 56], [60, 21], gold, line);
+          c.fillStyle = gold; c.strokeStyle = line; c.lineWidth = 1;
+          for (let x = 66; x < 106; x += 9) {
+            const h = 12 * (1 - (x - 66) / 60);
+            const edge = 17 - (x - 66) * 0.32;
+            [-1, 1].forEach(s => {
+              c.beginPath(); c.moveTo(x - 3, s * edge); c.lineTo(x + 3, s * (edge + h * 0.6)); c.lineTo(x + 4, s * edge); c.closePath(); c.fill(); c.stroke();
+            });
+          }
+          c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-58, -20); c.quadraticCurveTo(-44, 0, -58, 22); c.stroke();
+          c.beginPath(); c.moveTo(-103, 7); c.quadraticCurveTo(-90, 11, -78, 9); c.stroke();
+          ringEye(c, -78, -5, 5.2);
+          leafFin(c, -46, 2, 58, 11, 0.32 + Math.sin(t * 2) * 0.06, '#1d3a73', line, 2.2);
+        }
+      });
+    }
+
+    function drawOceanSunfish(ctx, t) {
+      const line = '#3c4853', sway = Math.sin(t * 2.2) * 0.1;
+      const fin = (s) => {
+        ctx.save();
+        ctx.translate(44, s * 40);
+        ctx.rotate(s * sway);
+        ctx.fillStyle = '#7c8a97'; ctx.strokeStyle = line; ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(-20, s * 14); ctx.quadraticCurveTo(-6, s * 60, 18, s * 88); ctx.quadraticCurveTo(30, s * 50, 28, s * 8); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+      };
+      fin(-1); fin(1);
+      // 꼬리 대신 있는 물결 모양 키
+      ctx.fillStyle = '#8b98a4'; ctx.strokeStyle = line; ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(70, -38);
+      ctx.quadraticCurveTo(96, -36, 92, -20);
+      ctx.quadraticCurveTo(106, -10, 94, 0);
+      ctx.quadraticCurveTo(106, 10, 92, 20);
+      ctx.quadraticCurveTo(96, 36, 70, 38);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      drawFishBase(ctx, t, {
+        top: [[-94, 4], [-88, -24], [-60, -48], [-22, -60], [20, -58], [56, -42], [80, -18]],
+        bottom: [[80, 20], [56, 44], [20, 58], [-22, 60], [-60, 48], [-88, 26]],
+        back: '#8b98a4', mid: '#e0e6ec', gradTop: -60, gradBot: 60, line,
+        paint(c) {
+          c.fillStyle = 'rgba(255, 255, 255, 0.28)';
+          [[-30, -30, 16, 8], [20, -18, 18, 8], [-10, 16, 20, 9], [40, 22, 14, 7]].forEach(([x, y, rx, ry]) => {
+            c.beginPath(); c.ellipse(x, y, rx, ry, 0.3, 0, Math.PI * 2); c.fill();
+          });
+        },
+        front(c) {
+          c.fillStyle = '#5b6873';
+          c.beginPath(); c.ellipse(-92, 5, 4, 6, 0, 0, Math.PI * 2); c.fill();
+          drawWhaleEye(c, -66, -12, 5.2, false);
+          leafFin(c, -38, -2, 28, 14, 0.6 + sway, '#7c8a97', line, 2.2);
+        }
+      });
+    }
+
+    function drawSailfish(ctx, t) {
+      const line = '#0f2347';
+      ctx.fillStyle = '#16335f'; ctx.strokeStyle = line; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(-98, -5); ctx.lineTo(-180, -1); ctx.lineTo(-98, 5); ctx.closePath(); ctx.fill(); ctx.stroke();
+      drawFishBase(ctx, t, {
+        top: [[-104, 0], [-92, -8], [-70, -13], [-36, -17], [2, -17], [40, -14], [76, -9], [106, -4], [122, -2]],
+        bottom: [[122, 2], [104, 5], [76, 10], [40, 15], [2, 18], [-36, 17], [-70, 13], [-92, 8]],
+        back: '#1f4e9a', mid: '#e0e9f1', gradTop: -14, gradBot: 14, line,
+        tail: { x: 120, y: 0, len: 48, up: 48, low: 48, fork: 0.75, root: 3, fill: '#1b4286', speed: 5 },
+        paint(c) {
+          c.strokeStyle = 'rgba(190, 225, 250, 0.75)'; c.lineWidth = 2;
+          for (let x = -56; x < 90; x += 16) { c.beginPath(); c.moveTo(x, -18); c.lineTo(x - 2, 6); c.stroke(); }
+        },
+        front(c) {
+          const sail = f => { f.moveTo(-78, -11); f.bezierCurveTo(-64, -84, 30, -80, 62, -11); };
+          bodyFin(c, sail, '#2a55ab', line, 2.6);
+          c.save(); c.beginPath(); sail(c); c.clip();
+          c.strokeStyle = 'rgba(15, 35, 71, 0.55)'; c.lineWidth = 1.4;
+          for (let x = -70; x < 60; x += 11) { c.beginPath(); c.moveTo(x, -8); c.lineTo(x + 8, -84); c.stroke(); }
+          c.fillStyle = 'rgba(10, 25, 55, 0.8)';
+          for (let x = -56; x < 44; x += 18) for (let y = -60; y < -16; y += 16) { c.beginPath(); c.arc(x + ((y + 60) % 32 ? 7 : 0), y, 2.8, 0, Math.PI * 2); c.fill(); }
+          c.restore();
+          triFin(c, [50, 13], [66, 32], [76, 9], '#1f4e9a', line);
+          c.strokeStyle = line; c.lineWidth = 2.4; c.lineCap = 'round';
+          c.beginPath(); c.moveTo(-56, 15); c.quadraticCurveTo(-40, 34, -18, 48); c.stroke();
+          c.lineCap = 'butt';
+          c.lineWidth = 1.8;
+          c.beginPath(); c.moveTo(-100, 3); c.quadraticCurveTo(-90, 7, -80, 5); c.stroke();
+          ringEye(c, -84, -3, 4.2);
+          leafFin(c, -66, 8, 30, 8, 0.6, '#1f4e9a', line, 2);
+        }
+      });
+    }
+
+    function drawPufferfish(ctx, t) {
+      const line = '#463a12', flap = Math.sin(t * 5) * 0.3;
+      drawFishBase(ctx, t, {
+        top: [[-68, 2], [-62, -20], [-40, -38], [-6, -44], [28, -36], [52, -18], [64, -6]],
+        bottom: [[64, 6], [52, 24], [28, 40], [-6, 46], [-40, 40], [-62, 22]],
+        back: '#b39a33', mid: '#c9b24f', gradTop: -44, gradBot: 10, line,
+        tail: { x: 62, y: 0, len: 30, up: 18, low: 18, fork: 0.05, root: 5, fill: '#a58d2c', speed: 6 },
+        paint(c) {
+          smoothClosedPath(c, [[-74, 10], [-50, 12], [-10, 14], [30, 12], [66, 6], [66, 60], [-74, 60]]);
+          c.fillStyle = '#fbfaf0'; c.fill();
+          c.fillStyle = '#5a4a14';
+          [[-34, -26], [-14, -34], [8, -32], [28, -22], [-24, -12], [-2, -18], [20, -8], [42, -8], [-44, -8]].forEach(([x, y]) => {
+            c.beginPath(); c.arc(x, y, 4, 0, Math.PI * 2); c.fill();
+          });
+          c.strokeStyle = 'rgba(70, 58, 18, 0.5)'; c.lineWidth = 1.4;
+          [[-30, 24], [-8, 30], [14, 26], [34, 20]].forEach(([x, y]) => {
+            c.beginPath(); c.moveTo(x, y); c.lineTo(x + 3, y + 6); c.lineTo(x + 6, y); c.stroke();
+          });
+        },
+        front(c) {
+          triFin(c, [32, -32], [46, -48], [54, -22], '#a58d2c', line);
+          triFin(c, [32, 34], [46, 48], [54, 22], '#e6d27e', line);
+          c.fillStyle = '#f1e6b4'; c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.ellipse(-68, 3, 6, 5, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+          c.beginPath(); c.moveTo(-74, 3); c.lineTo(-62, 3); c.stroke();
+          ringEye(c, -42, -14, 7);
+          leafFin(c, -14, 2, 26, 22, 0.1 + flap, '#d6bf5c', line, 2);
+        }
+      });
+    }
+
+    function drawMorayEel(ctx, t) {
+      const line = '#1f2610';
+      const top = [], bottom = [], finTop = [], finBot = [];
+      for (let i = 0; i <= 13; i++) {
+        const x = -100 + i * 20;
+        const y = Math.sin(x / 38 + t * 3) * 8 * (i / 13 + 0.15);
+        const half = i < 2 ? 12 + i * 6 : 25 * (1 - Math.pow((i - 2) / 11, 1.7)) + 2;
+        const fin = i < 3 ? 0 : 7 * (1 - i / 22);
+        top.push([x, y - half]);
+        bottom.unshift([x, y + half]);
+        finTop.push([x, y - half - fin]);
+        finBot.unshift([x, y + half + (i < 7 ? 0 : fin)]);
+      }
+      // 등에서 꼬리까지 이어지는 지느러미
+      smoothClosedPath(ctx, finTop.concat(finBot));
+      ctx.fillStyle = '#8d9a45'; ctx.fill();
+      ctx.strokeStyle = line; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.stroke();
+
+      const y0 = top[0][1] + 12;
+      // 벌린 입과 이빨
+      ctx.fillStyle = '#6d2636'; ctx.strokeStyle = line; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(-118, y0 - 8); ctx.quadraticCurveTo(-96, y0, -116, y0 + 13); ctx.lineTo(-80, y0 + 8); ctx.lineTo(-80, y0 - 4); ctx.closePath(); ctx.fill(); ctx.stroke();
+      smoothClosedPath(ctx, top.concat(bottom));
+      const g = ctx.createLinearGradient(0, -28, 0, 28);
+      g.addColorStop(0, '#5f6e30');
+      g.addColorStop(1, '#a7b05c');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.save();
+      smoothClosedPath(ctx, top.concat(bottom)); ctx.clip();
+      ctx.fillStyle = 'rgba(30, 38, 14, 0.72)';
+      for (let i = 0; i < 44; i++) {
+        const x = -84 + (i * 29) % 210;
+        const yy = -22 + (i * 17) % 44;
+        ctx.beginPath(); ctx.ellipse(x, yy + Math.sin(x / 38 + t * 3) * 6, 4, 2.6, i, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+      smoothClosedPath(ctx, top.concat(bottom));
+      ctx.strokeStyle = line; ctx.lineWidth = 3; ctx.stroke();
+
+      // 위턱·아래턱
+      ctx.fillStyle = '#6a7a35'; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(-122, y0 - 8); ctx.quadraticCurveTo(-104, y0 - 20, -82, y0 - 12); ctx.lineTo(-84, y0 - 5); ctx.quadraticCurveTo(-104, y0 - 6, -122, y0 - 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#b5bd6b';
+      ctx.beginPath(); ctx.moveTo(-120, y0 + 14); ctx.quadraticCurveTo(-100, y0 + 18, -80, y0 + 16); ctx.lineTo(-82, y0 + 8); ctx.quadraticCurveTo(-102, y0 + 8, -120, y0 + 14); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      for (let x = -116; x < -90; x += 7) {
+        ctx.beginPath(); ctx.moveTo(x, y0 - 7); ctx.lineTo(x + 2, y0 - 1); ctx.lineTo(x + 4, y0 - 7); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(x, y0 + 11); ctx.lineTo(x + 2, y0 + 5); ctx.lineTo(x + 4, y0 + 11); ctx.closePath(); ctx.fill();
+      }
+      ringEye(ctx, -92, y0 - 14, 3.8);
+    }
+
+    function drawSalmon(ctx, t) {
+      const line = '#22323e';
+      drawFishBase(ctx, t, {
+        top: [[-100, 4], [-94, -6], [-74, -16], [-44, -24], [-8, -26], [28, -22], [60, -14], [86, -7], [104, -4]],
+        bottom: [[104, 4], [86, 8], [60, 14], [28, 20], [-8, 24], [-44, 23], [-74, 16], [-94, 10]],
+        back: '#4e6f86', mid: '#eef2f5', gradTop: -24, gradBot: 8, line,
+        tail: { x: 102, y: 0, len: 38, up: 30, low: 30, fork: 0.3, root: 4, fill: '#567488', speed: 5 },
+        paint(c) {
+          c.strokeStyle = 'rgba(244, 140, 130, 0.65)'; c.lineWidth = 6;
+          c.beginPath(); c.moveTo(-70, 2); c.quadraticCurveTo(10, 4, 100, 0); c.stroke();
+          c.fillStyle = '#17242e';
+          for (let i = 0; i < 26; i++) {
+            const x = -60 + (i * 31) % 160, y = -22 + (i * 7) % 18;
+            c.beginPath(); c.arc(x, y, 2, 0, Math.PI * 2); c.fill();
+          }
+        },
+        front(c) {
+          triFin(c, [-10, -26], [6, -46], [26, -21], '#567488', line);
+          triFin(c, [60, -14], [70, -22], [76, -10], '#567488', line);
+          triFin(c, [50, 16], [66, 32], [72, 12], '#c9d3db', line);
+          triFin(c, [-8, 24], [8, 38], [14, 22], '#c9d3db', line);
+          c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-60, -16); c.quadraticCurveTo(-46, 2, -60, 16); c.stroke();
+          c.beginPath(); c.moveTo(-98, 6); c.quadraticCurveTo(-86, 11, -72, 7); c.stroke();
+          drawWhaleEye(c, -78, -5, 4.4, false);
+          leafFin(c, -52, 12, 30, 11, 0.55 + Math.sin(t * 3) * 0.1, '#c9d3db', line, 2);
+        }
+      });
+    }
+
+    function drawBlueTang(ctx, t) {
+      const line = '#0a1a55';
+      drawFishBase(ctx, t, {
+        behind(c) {
+          triFin(c, [-46, -28], [10, -52], [62, -14], '#14339a', line);
+          triFin(c, [-30, 36], [20, 54], [62, 14], '#14339a', line);
+        },
+        top: [[-70, 4], [-66, -12], [-48, -30], [-16, -40], [20, -38], [50, -24], [66, -8], [72, -4]],
+        bottom: [[72, 4], [66, 8], [50, 24], [20, 38], [-16, 40], [-48, 30], [-66, 16]],
+        back: '#2158e0', mid: '#2f6df2', gradTop: -40, gradBot: 40, line,
+        tail: { x: 70, y: 0, len: 36, up: 26, low: 26, fork: 0.12, root: 5, fill: '#facc15', speed: 6 },
+        paint(c) {
+          // 몸의 검은 팔레트 무늬
+          c.fillStyle = '#071233';
+          smoothClosedPath(c, [[-44, -24], [-2, -33], [44, -18], [64, -3], [48, 8], [36, -2], [24, -18], [-6, -16], [-32, -10]]);
+          c.fill();
+          c.fillStyle = '#071233';
+          c.beginPath(); c.ellipse(34, 12, 22, 7, 0.1, 0, Math.PI * 2); c.fill();
+        },
+        front(c) {
+          c.strokeStyle = line; c.lineWidth = 2;
+          c.beginPath(); c.moveTo(-70, 5); c.quadraticCurveTo(-64, 9, -58, 6); c.stroke();
+          ringEye(c, -46, -8, 5.4);
+          leafFin(c, -24, 6, 28, 16, 0.25 + Math.sin(t * 5) * 0.25, '#facc15', line, 2);
+        }
+      });
+    }
+
+    // 넙치: 위에서 본 모습 (바닥에 붙어 사는 납작한 몸, 두 눈이 한쪽에 모여 있어요)
+    function drawFlounder(ctx, t) {
+      const line = '#3a2e1b';
+      const outer = [], body = [];
+      for (let i = 0; i < 40; i++) {
+        const a = (i / 40) * Math.PI * 2;
+        const x = Math.cos(a), y = Math.sin(a);
+        const wave = Math.sin(i * 1.6 + t * 8) * 1.6;
+        outer.push([x * 94, y * (58 + wave)]);
+        body.push([x * 80, y * 46]);
+      }
+      // 꼬리
+      fishTail(ctx, t, { x: 88, y: 0, len: 34, up: 24, low: 24, fork: 0.02, root: 7, fill: '#9a8254', stroke: line, speed: 4 });
+      // 몸을 둘러싼 지느러미
+      smoothClosedPath(ctx, outer);
+      ctx.fillStyle = '#a58d5e'; ctx.fill();
+      ctx.strokeStyle = line; ctx.lineWidth = 2.6; ctx.stroke();
+      smoothClosedPath(ctx, body);
+      const g = ctx.createRadialGradient(-10, -6, 8, 0, 0, 90);
+      g.addColorStop(0, '#b8a06e');
+      g.addColorStop(1, '#8a7346');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.save();
+      smoothClosedPath(ctx, body); ctx.clip();
+      for (let i = 0; i < 44; i++) {
+        const x = -74 + (i * 37) % 150, y = -42 + (i * 23) % 84;
+        ctx.fillStyle = i % 3 ? 'rgba(60, 45, 22, 0.42)' : 'rgba(245, 232, 200, 0.5)';
+        ctx.beginPath(); ctx.ellipse(x, y, 3 + (i % 4), 2 + (i % 3), i, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(58, 46, 27, 0.6)'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(-40, 0); ctx.lineTo(76, 0); ctx.stroke();
+      ctx.restore();
+      smoothClosedPath(ctx, body);
+      ctx.strokeStyle = line; ctx.lineWidth = 2.6; ctx.stroke();
+      // 입과 한쪽에 모인 두 눈
+      ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(-82, 4); ctx.quadraticCurveTo(-70, 16, -56, 14); ctx.stroke();
+      ringEye(ctx, -60, -12, 5);
+      ringEye(ctx, -44, -24, 5);
+      leafFin(ctx, -30, 24, 26, 14, 1.2, '#9a8254', line, 2);
+    }
+
+    const EXTRA_RENDERERS = {
+      mako_shark: drawMakoShark, lemon_shark: drawLemonShark, nurse_shark: drawNurseShark, saw_shark: drawSawShark,
+      bottlenose_dolphin: drawBottlenoseDolphin, common_dolphin: drawCommonDolphin, finless_porpoise: drawFinlessPorpoise, fin_whale: drawFinWhale,
+      bluefin_tuna: drawBluefinTuna, ocean_sunfish: drawOceanSunfish, sailfish: drawSailfish, pufferfish: drawPufferfish,
+      moray_eel: drawMorayEel, salmon: drawSalmon, blue_tang: drawBlueTang, flounder: drawFlounder
+    };
+
     /* 10. INITIALIZATION */
     window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('coin-counter').innerText = goldCoins;
       initDrawingStudio();
+      updateCategoryTabs();
       renderAnimalDock();
       requestAnimationFrame(animate);
 

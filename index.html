@@ -77,6 +77,8 @@
     .spell-slot { width: 3.4rem; height: 3.8rem; border-radius: 0.9rem; border: 3px dashed rgba(125,211,252,0.55); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 900; color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.3); }
     .spell-slot.current { border-color: #fde047; }
     .spell-slot.filled { border: 3px solid #34d399; color: #fde047; background: rgba(16,185,129,0.22); }
+    .spell-slot:empty::after { content: '?'; color: rgba(255,255,255,0.35); }
+    .spell-slot.current:empty::after { color: #fde047; }
     .spell-tile { width: 4.2rem; height: 4.2rem; border-radius: 1rem; font-size: 2.3rem; font-weight: 900; color: #0f172a; background: linear-gradient(#fffbeb, #fcd34d); border: 2px solid #fff; box-shadow: 0 5px 0 rgba(0,0,0,0.35); transition: transform 0.08s ease, opacity 0.2s ease; }
     .spell-tile:active { transform: translateY(3px); }
     .spell-tile.used { opacity: 0.15; pointer-events: none; }
@@ -2687,20 +2689,26 @@
       drawDockThumbnail(document.getElementById('spellCanvas'), item.id, 3);
       document.getElementById('spell-msg').innerText = '이름을 듣고 글자를 순서대로 눌러요';
 
-      // 글자 칸: 흐린 글자를 보고 찾을 수 있게 표시
+      // 글자 칸: 미리보기 글자 없이 빈칸만 (소리를 듣고 스스로 찾기)
       const slots = document.getElementById('spell-slots');
       slots.innerHTML = '';
       spellChars.forEach(ch => {
         const slot = document.createElement('div');
         slot.className = 'spell-slot';
-        slot.innerText = ch;
+        slot.dataset.ch = ch;
         slots.appendChild(slot);
       });
 
-      // 글자 카드: 이름 글자 + 헷갈리게 하는 글자
+      // 글자 카드: 이름 글자 + 생김새가 비슷한 글자 + 다른 이름 글자
+      const used = new Set(spellChars);
+      const lookAlikes = shuffled(spellChars.flatMap(similarSyllables)).filter(ch => {
+        if (used.has(ch)) return false;
+        used.add(ch);
+        return true;
+      }).slice(0, 2);
       const pool = [...new Set(ALL_SPECIES_IDS.flatMap(id => Array.from(shortName(SPECIES[id]).replace(/\s+/g, ''))))]
-        .filter(ch => !spellChars.includes(ch));
-      const extras = shuffled(pool).slice(0, spellChars.length <= 3 ? 3 : 2);
+        .filter(ch => !used.has(ch));
+      const extras = lookAlikes.concat(shuffled(pool).slice(0, spellChars.length <= 3 ? 2 : 1));
       const tiles = document.getElementById('spell-tiles');
       tiles.innerHTML = '';
       shuffled([...spellChars, ...extras]).forEach(ch => {
@@ -2715,6 +2723,22 @@
       markCurrentSpellSlot();
       document.getElementById('spell-modal').classList.remove('hidden');
       speakSpellName();
+    }
+
+    // 헷갈리기 쉬운 비슷한 글자 만들기 (예: 상 → 산·성, 고 → 구)
+    function similarSyllables(ch) {
+      const code = ch.charCodeAt(0) - 0xAC00;
+      if (code < 0 || code > 11171) return [];
+      const cho = Math.floor(code / 588), jung = Math.floor((code % 588) / 28), jong = code % 28;
+      const make = (c, v, f) => String.fromCharCode(0xAC00 + c * 588 + v * 28 + f);
+      const VOWEL_PAIRS = { 0: 4, 4: 0, 8: 13, 13: 8, 1: 5, 5: 1, 18: 20, 20: 18, 2: 6, 6: 2, 12: 17, 17: 12 };
+      const JONG_SWAP = { 0: 4, 4: 21, 21: 4, 8: 16, 16: 8, 1: 0, 17: 16 };
+      const CHO_SWAP = { 0: 15, 15: 0, 3: 16, 16: 3, 7: 17, 17: 7, 12: 14, 14: 12, 9: 12 };
+      const out = [];
+      if (VOWEL_PAIRS[jung] !== undefined) out.push(make(cho, VOWEL_PAIRS[jung], jong));
+      if (JONG_SWAP[jong] !== undefined) out.push(make(cho, jung, JONG_SWAP[jong]));
+      if (CHO_SWAP[cho] !== undefined) out.push(make(CHO_SWAP[cho], jung, jong));
+      return out;
     }
 
     function markCurrentSpellSlot() {
@@ -2737,9 +2761,12 @@
         tile.classList.remove('wrong');
         void tile.offsetWidth;
         tile.classList.add('wrong');
-        document.getElementById('spell-msg').innerText = `"${spellChars[spellIndex]}" 글자를 찾아볼까?`;
+        // 글자를 화면에 바로 보여주지 않고 소리로만 힌트 → 3번 틀리면 칸에 흐린 글자 + 카드 반짝
+        document.getElementById('spell-msg').innerText = spellMisses >= 3 ? '반짝이는 글자를 눌러 봐요!' : '소리를 잘 듣고 다시 찾아볼까?';
         speakText(spellChars[spellIndex], 'ko-KR');
-        if (spellMisses >= 2) {
+        if (spellMisses >= 3) {
+          const slot = document.querySelectorAll('.spell-slot')[spellIndex];
+          if (slot) slot.innerText = spellChars[spellIndex];
           const target = [...document.querySelectorAll('.spell-tile:not(.used)')].find(t => t.innerText === spellChars[spellIndex]);
           if (target) target.classList.add('hint');
         }
@@ -2748,7 +2775,9 @@
 
       document.querySelectorAll('.spell-tile.hint').forEach(t => t.classList.remove('hint'));
       tile.classList.add('used');
-      document.querySelectorAll('.spell-slot')[spellIndex].classList.add('filled');
+      const doneSlot = document.querySelectorAll('.spell-slot')[spellIndex];
+      doneSlot.innerText = ch; // 맞힌 글자만 칸에 나타남
+      doneSlot.classList.add('filled');
       spellIndex++;
       spellMisses = 0;
       markCurrentSpellSlot();

@@ -2385,6 +2385,7 @@
     const SPEECH_GAP_MS = 1100;
     let speechToken = 0;
 
+    function bestKoVoice(){try{const vs=speechSynthesis.getVoices().filter(v=>/^ko/i.test((v.lang||'').replace('_','-'))); if(!vs.length) return null; let want=null; try{want=localStorage.getItem('studyroomVoice');}catch(e){} const m=want&&vs.find(v=>v.voiceURI===want); if(m) return m; const sc=v=>(/premium|프리미엄/i.test(v.name)?50:0)+(/enhanced|향상/i.test(v.name)?40:0)+(/natural|neural|online/i.test(v.name)?30:0)+(/google/i.test(v.name)?10:0)+(/yuna|유나/i.test(v.name)?5:0)+(v.localService?1:0); return vs.slice().sort((a,b)=>sc(b)-sc(a))[0];}catch(e){return null;}}
     function speakSequence(items) {
       if (isMuted || !('speechSynthesis' in window)) return;
       const token = ++speechToken;
@@ -2396,6 +2397,7 @@
         const item = items[index++];
         const u = new SpeechSynthesisUtterance(item.text);
         u.lang = item.lang;
+        if (/^ko/i.test(item.lang)) { const kv = bestKoVoice(); if (kv) u.voice = kv; }
         u.rate = SPEECH_RATE[item.lang] || 0.72;
         u.pitch = 1.05;
         let moved = false;
